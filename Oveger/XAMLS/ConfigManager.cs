@@ -6,104 +6,110 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
 namespace Oveger.XAMLS
 {
-    internal class ConfigManager
+    internal static class ConfigManager
     {
-        public enum TypeFile
+        public static void Save(string PathToSave)
         {
-            Create,Load,Save,Remove
+            string json = File.ReadAllText("itens.json");
+            dynamic jsonobj = JsonConvert.DeserializeObject(json);
+            JArray PathsSTR = new JArray();
+            foreach (string Path in jsonobj.Paths)
+                PathsSTR.Add(Path);
+            PathsSTR.Add(PathToSave);
+            jsonobj.Paths = PathsSTR;
+            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+            File.WriteAllText("itens.json", output);
         }
 
-        public void LoadOrCreateConfigs(TypeFile typeFile, MainWindow mainWindow, string PathToSave = null)
+        public static void RemoveifNotExist()
         {
-            if(typeFile == TypeFile.Create)
+            string json = File.ReadAllText("itens.json");
+            dynamic jsonobj = JsonConvert.DeserializeObject(json);
+            JArray PathsSTR = new JArray();
+            foreach (string path in jsonobj.Paths)
+                if (File.Exists(path))
+                    PathsSTR.Add(path);
+            jsonobj.Paths = PathsSTR;
+            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+            File.WriteAllText("itens.json", output);
+        }
+
+        public static void ChangePath(string oldPath, string newPath)
+        {
+            string json = File.ReadAllText("itens.json");
+            dynamic jsonobj = JsonConvert.DeserializeObject(json);
+            JArray PathsSTR = new JArray();
+            foreach (string path in jsonobj.Paths)
+                if (oldPath == path)
+                    PathsSTR.Add(newPath);
+                else
+                    PathsSTR.Add(path);
+            jsonobj.Paths = PathsSTR;
+            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+            File.WriteAllText("itens.json", output);
+        }
+
+        public static void LoadOrCreate(MainWindow mainWindow)
+        {
+            if (!File.Exists("itens.json"))
             {
+                File.Create("itens.json").Dispose();
                 StringBuilder sb = new StringBuilder();
                 StringWriter sw = new StringWriter(sb);
 
                 using (JsonWriter writer = new JsonTextWriter(sw))
                 {
                     writer.Formatting = Formatting.Indented;
-
                     writer.WriteStartObject();
-
                     writer.WritePropertyName("Paths");
                     writer.WriteStartArray();
-
-                    //VALUES PATHS HERE
-
                     writer.WriteEndArray();
-
-
                     writer.WriteEndObject();
 
                     using (StreamWriter file = File.CreateText("itens.json"))
                     {
                         JObject JOBe = JObject.Parse(sb.ToString());
-
                         JsonSerializer serializer = new JsonSerializer();
                         serializer.Formatting = Formatting.Indented;
                         serializer.Serialize(file, JOBe);
-
                         file.Dispose();
                     }
                 }
             }
-            else if (typeFile == TypeFile.Load)
+            else
             {
                 StreamReader r = new StreamReader("itens.json");
-
                 string json = r.ReadToEnd();
-
                 dynamic data = JObject.Parse(json);
                 dynamic Paths = data.Paths;
-
-
-                //GETVALUES
-
-                //SETVALUES
-                
-
                 foreach (string path in Paths)
-                {
-                    mainWindow.ButtonSettings(path);
-                }
-                    
-
-
+                    if(File.Exists(path))
+                        mainWindow.SetConfig(path);
                 r.Dispose();
             }
-            else if(typeFile == TypeFile.Save)
-            {
-                string json = File.ReadAllText("itens.json");
-
-                dynamic jsonobj = JsonConvert.DeserializeObject(json);
-
-                JArray PathsSTR = new JArray();
-                foreach(string Path in jsonobj.Paths)
-                    PathsSTR.Add(Path);
-
-                PathsSTR.Add(PathToSave);
-
-                //SETVALUES
-                
-             
-                jsonobj.Paths = PathsSTR;
-
-                //var pro = JsonConvert.DeserializeObject<List<string>>(jsonobj.Paths[0]);
-                //Console.WriteLine(pro);
-
-                Console.WriteLine("COLOCAR PATHS");
-                
-
-                string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-                File.WriteAllText("itens.json", output);
-            }
         }
-
+        public static void verifyPaths(bool warn)
+        {
+            string json = File.ReadAllText("itens.json");
+            dynamic jsonobj = JsonConvert.DeserializeObject(json);
+            JArray PathsSTR = new JArray();
+            foreach(string path in jsonobj.Paths)
+                if (File.Exists(path))
+                    PathsSTR.Add(path);
+                else
+                    if (warn)
+                    {
+                        MessageBox.Show($"[{Path.GetFileName(path)}] NÃO ENCONTRADO\n-- {path} ", "LOCAL NÃO ENCONTRADO");
+                    }
+            jsonobj.Paths = PathsSTR;
+            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+            File.WriteAllText("itens.json", output);
+        }
     }
 }

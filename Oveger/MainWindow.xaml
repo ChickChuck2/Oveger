@@ -19,7 +19,7 @@
     <Window.Background>
         <SolidColorBrush Opacity="0.45" Color="#FF1F1F1F"/>
     </Window.Background>
-    
+
     <Window.Resources>
 
         <Style TargetType="Button" x:Key="TabButtonCircle">
@@ -80,11 +80,14 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
-    <WrapPanel
+    <WrapPanel Width="{x:Static SystemParameters.PrimaryScreenWidth}"
+        Height="{x:Static SystemParameters.PrimaryScreenHeight}">
+        <WrapPanel
         x:Name="wrappanel1"
-        VerticalAlignment="Center"
         HorizontalAlignment="Center"
         Width="{x:Static SystemParameters.PrimaryScreenWidth}"
-        Height="{x:Static SystemParameters.PrimaryScreenHeight}">
+        Height="683" VerticalAlignment="Top"/>
+        <Canvas Width="51"/>
+        <CheckBox x:Name="expandCBox" Content="Categorizar por extensão" Foreground="White" Background="White" FontWeight="Normal"/>
     </WrapPanel>
 </Window>

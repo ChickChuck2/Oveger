@@ -22,7 +22,7 @@ namespace Oveger.XAMLS
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-            BitmapImage image = new BitmapImage(new Uri("", UriKind.Relative));
+            BitmapImage image = new BitmapImage(new Uri("https://github.com/ChickChuck2/Oveger/blob/master/Oveger/Resources/findpath.png?raw=true", UriKind.Absolute));
             choosePath.Style = new Style()
             {
                 Setters =

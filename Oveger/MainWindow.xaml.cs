@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using NReco.VideoConverter;
 using Oveger.XAMLS;
+using Shell32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,7 +22,7 @@ using System.Windows.Media.Imaging;
 namespace Oveger
 {
     /// <summary>
-    /// Interação lógica para MainWindow.xam
+    /// Interação lógica para MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
@@ -29,6 +31,12 @@ namespace Oveger
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        public static RoutedCommand MyCommand = new RoutedCommand();
+        private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            Hide();
         }
 
         [Flags]
@@ -83,16 +91,6 @@ namespace Oveger
             TextBlock ItemName = new TextBlock();
             Button addnewitem = new Button();
 
-            Loaded += Window1_Loaded;
-
-            if (expandCBox.IsChecked.Value)
-            {
-                Console.WriteLine("CHECKED");
-            }
-            else
-            {
-                Console.WriteLine("UNCHECKED");
-            }
             wrappanel1.Width = wrappanel1.Width - 50;
             wrappanel1.Height = wrappanel1.Height - 50;
 
@@ -102,7 +100,7 @@ namespace Oveger
 
             addItemGrid.Children.Add(addnewitem);
 
-            ItemName.Text = "Add File";
+            ItemName.Text = "Adicionar Arquivo";
             ItemName.Width = 70;
             ItemName.Height = double.NaN;
             ItemName.Margin = new Thickness { Top = 77 };
@@ -118,118 +116,156 @@ namespace Oveger
         }
         private void window1_initialized(object sender, EventArgs e)
         {
-            CreateAddButton();
-            ConfigManager.verifyPaths(true);
-            ConfigManager.LoadOrCreate(this);
-        }
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            WindowsPrincipal principal = new WindowsPrincipal(identity);
+            bool isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+            if (!isAdmin)
+            {
+                //Public domain; no attribution required.
+                ProcessStartInfo info = new ProcessStartInfo(VariablesClasses.AppPath);
+                info.UseShellExecute = true;
+                info.Verb = "runas";
+                Process.Start(info);
+                Process.GetCurrentProcess().Kill();
 
+            }
+
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            MyCommand.InputGestures.Add(new KeyGesture(Key.Escape));
+            CreateAddButton();
+        }
+        public string[] Hotkeys { get; set; }
         private void Window1_Loaded(object sender, RoutedEventArgs e)
         {
             var source = PresentationSource.FromVisual(this) as HwndSource;
             if (source == null)
                 throw new Exception("Could not create hWnd source from window.");
             source.AddHook(WndProc);
-
-            RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)Modifiers.Ctrl | (int)Modifiers.Alt, (int)System.Windows.Forms.Keys.S);
-            
+            RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
             TaskbarInitialize();
+            Hide();
+
+            ConfigManager.LoadOrCreate(this);
+            ConfigManager.verifyPaths(true);
         }
+
+        System.Windows.Forms.ContextMenuStrip context = new System.Windows.Forms.ContextMenuStrip();
+        System.Windows.Forms.ToolStripMenuItem close = new System.Windows.Forms.ToolStripMenuItem { Text = "Fechar" };
+        System.Windows.Forms.ToolStripMenuItem show = new System.Windows.Forms.ToolStripMenuItem { Text = "Mostrar" };
+        System.Windows.Forms.ToolStripMenuItem StartWithWindows = new System.Windows.Forms.ToolStripMenuItem { Text = "Iniciar com Windows" };
+        System.Windows.Forms.ToolStripMenuItem changehotkey = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
 
         private void TaskbarInitialize()
         {
+            close.Click += new EventHandler((object sender, EventArgs e) => Process.GetCurrentProcess().Kill());
+            show.Click += new EventHandler((object sender, EventArgs e) => Show());
+            StartWithWindows.Click += new EventHandler((object sender, EventArgs e) =>
+            {
+                StartWithWindows.Checked = !StartWithWindows.Checked;
+                RegKeyRegister.SetStartup(StartWithWindows.Checked);
+                ConfigManager.Save(StartWithWindows.Checked, null);
+            });
+            changehotkey.Click += new EventHandler((object sender, EventArgs e) =>
+            {
+                helpandshortcut helpandshortcut = new helpandshortcut();
+                helpandshortcut.Show();
+            });
+
+            context.Items.Add(show);
+            context.Items.Add(StartWithWindows);
+            context.Items.Add(changehotkey);
+            context.Items.Add(close);
+            //context.Container.Add(changehotkey);
+            //context.Container.Add(close);
+
             IntPtr icon = Properties.Resources.icon.GetHicon();
             notifyIcon = new System.Windows.Forms.NotifyIcon();
             notifyIcon.Text = "Oveger";
+            notifyIcon.ContextMenuStrip = context;
             notifyIcon.Icon = System.Drawing.Icon.FromHandle(icon);
+            notifyIcon.Visible = true;
             notifyIcon.MouseClick += new System.Windows.Forms.MouseEventHandler((object sender, System.Windows.Forms.MouseEventArgs e) =>
             {
                 if (e.Button == System.Windows.Forms.MouseButtons.Left)
-                    if (!IsVisible) Show(); else Hide();
-                else Close();
+                    Show();
             });
-            notifyIcon.Visible = true;
         }
         private void CreateButtonFile()
         {
             OpenFileDialog AddItem = new OpenFileDialog();
+            AddItem.Multiselect = true;
+            AddItem.DereferenceLinks = false;
             AddItem.Filter = "All files|*.*" +
                 "|images|*.png;*.jpeg;*.jpg" +
                 "|exe|*.exe" +
                 "|gif|*.gif";
             if (AddItem.ShowDialog() == true)
             {
-                string path = AddItem.FileName;
-                SetConfig(path);
-                ConfigManager.Save(path); //SAVE PATH
+                string[] paths = AddItem.FileNames;
+
+                foreach(string path in paths)
+                {
+                    string VPath = path;
+                    if(Path.GetExtension(path).ToUpper() == ".lnk".ToUpper())
+                        VPath = GetLnkPath(path);
+                    SetConfig(VPath);
+                    ConfigManager.Save(StartWithWindows.Checked, VPath);
+                }
             }
         }
-
+        
         public void SetConfig(string path)
         {
-            if (File.Exists(path))
+            string EXT = Path.GetExtension(path).ToUpper();
+            string FileName = Path.GetFileName(path);
+            Grid addItemGrid = new Grid() { Width = 70, Height = 90 };
+            Button addnewitem = new Button() { Style = FindResource("AddButton") as Style };
+            TextBlock ItemName = new TextBlock() { Text = ConfigManager.GetLabelName(path, FileName), Width = 70, Height = double.NaN, Margin = new Thickness { Top = 77 }, TextAlignment = TextAlignment.Center };
+            addItemGrid.Children.Add(addnewitem);
+            addItemGrid.Children.Add(ItemName);
+            wrappanel1.Children.Add(addItemGrid);
+
+            ImageBrush img = new ImageBrush() { Stretch = Stretch.UniformToFill };
+            if (ImageExtensions.Contains(EXT) || EXT.Contains(".gif".ToUpper()))
+                setButtonConfig(TypeofGet.Icon, img, addnewitem, path);
+            else if (EXT.Contains(".exe".ToUpper()) || EXT.Contains(".url".ToUpper()))
             {
-                string EXT = Path.GetExtension(path).ToUpper();
-                string FileName = Path.GetFileName(path);
-
-                Grid addItemGrid = new Grid() { Width=70, Height=90};
-                Button addnewitem = new Button() { Style = FindResource("AddButton") as Style};
-                TextBlock ItemName = new TextBlock(){Text=FileName,Width=70,Height=double.NaN,Margin=new Thickness{Top=77},TextAlignment=TextAlignment.Center};
-
-                addItemGrid.Children.Add(addnewitem);
-                addItemGrid.Children.Add(ItemName);
-
-                wrappanel1.Children.Add(addItemGrid);
-
-                ImageBrush img = new ImageBrush() { Stretch=Stretch.UniformToFill};
-
-                if (ImageExtensions.Contains(EXT) || EXT.Contains(".gif".ToUpper()))
-                    setButtonConfig(TypeofGet.Icon, img, addnewitem, path);
-                else if (EXT.Contains(".exe".ToUpper()))
-                {
-                    img = ConvertedExeImage(ExtractIconfromFile(path).ToBitmap());
-                    addnewitem.Style = setStyle(addnewitem, img);
-                }
-                else if (EXT.Contains(".mp4".ToUpper()))
-                {
-                    FFMpegConverter ffMpeg = new FFMpegConverter();
-                    string thumbDirectory = @"thumbnails";
-                    string thumbnail = FileName + ".jpg";
-                    string thumbFileDir = Path.Combine(thumbDirectory, thumbnail);
-                    if (!Directory.Exists("thumbnails"))
-                        Directory.CreateDirectory("thumbnails");
-                    if (!File.Exists(Path.Combine(thumbDirectory, thumbnail)))
-                        ffMpeg.GetVideoThumbnail(path, @"thumbnails\" + thumbnail);
-                    img.ImageSource = SetImage(thumbFileDir);
-                    addnewitem.Style = setStyle(addnewitem, img);
-                }
-                else if (EXT.Contains(".txt".ToUpper()))
-                    setButtonConfig(TypeofGet.IconEXT,img, addnewitem, path);
-                else
-                    setButtonConfig(TypeofGet.IconEXT, img, addnewitem, path);
-
-                addnewitem.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => OpenFileProcess(path));
-                addnewitem.MouseRightButtonDown += new MouseButtonEventHandler((object sender, MouseButtonEventArgs e) => PropertyRighClick(path,addItemGrid));
+                img = ConvertBitmapToImageBrush(ExtractIconfromFile(path).ToBitmap());
+                addnewitem.Style = setStyle(addnewitem, img);
             }
-            else ConfigManager.RemoveifNotExist(); //REMOVE PATH
-        }
-
-        private enum TypeofGet
-        {
-            IconEXT,
-            Icon
-        }
-        private void setButtonConfig(TypeofGet type,ImageBrush img, Button addnewitem, string path)
-        {
-            if(type == TypeofGet.IconEXT)
+            else if (EXT.Contains(".lnk".ToUpper()))
             {
-                img.ImageSource = IconManager.FindIconForFilename(path, false);
+                img = ConvertBitmapToImageBrush(ExtractIconfromFile(path).ToBitmap());
+                setButtonConfig(TypeofGet.IconEXT, img, addnewitem, path);
+            }
+            else if (EXT.Contains(".mp4".ToUpper()) || EXT.Contains(".mkv".ToUpper()) || EXT.Contains(".webp".ToUpper()))
+            {
+                FFMpegConverter ffMpeg = new FFMpegConverter();
+                string thumbDirectory = @"thumbnails";
+                string thumbnail = FileName + ".jpg";
+                string thumbFileDir = Path.Combine(thumbDirectory, thumbnail);
+                if (!Directory.Exists("thumbnails"))
+                    Directory.CreateDirectory("thumbnails");
+                if (!File.Exists(Path.Combine(thumbDirectory, thumbnail)))
+                    ffMpeg.GetVideoThumbnail(path, @"thumbnails\" + thumbnail);
+                img.ImageSource = SetImage(thumbFileDir);
                 addnewitem.Style = setStyle(addnewitem, img);
             }
             else
-            {
+                setButtonConfig(TypeofGet.IconEXT, img, addnewitem, path);
+
+            addnewitem.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => OpenFileProcess(path));
+            addnewitem.MouseRightButtonDown += new MouseButtonEventHandler((object sender, MouseButtonEventArgs e) => PropertyRighClick(path, addItemGrid, ItemName));
+        }
+        private enum TypeofGet { IconEXT, Icon }
+        private void setButtonConfig(TypeofGet type,ImageBrush img, Button addnewitem, string path)
+        {
+            Console.WriteLine($"EXTRACTING ICON FROM {path}");
+            if(type == TypeofGet.IconEXT)
+                img.ImageSource = IconManager.FindIconForFilename(path, true);
+            else
                 img.ImageSource = SetImage(path);
-                addnewitem.Style = setStyle(addnewitem, img);
-            }
+            addnewitem.Style = setStyle(addnewitem, img);
         }
 
         private ImageSource SetImage(string FilePath)
@@ -260,20 +296,19 @@ namespace Oveger
             return new Point(w32Mouse.X, w32Mouse.Y);
         }
 
-        private void PropertyRighClick(string path, Grid gridToDelete, string oldPath = null)
+        private void PropertyRighClick(string path, Grid gridToDelete, TextBlock textblock, string oldPath = null)
         {
             RightButtonClick right = new RightButtonClick();
             oldPath = path;
 
             Closing += new CancelEventHandler((object sender, CancelEventArgs e) => right.Close());
-
-            TextBlock textblock = new TextBlock();
-            right.open.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => OpenFileProcess(path));
-            right.rename.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => RenameLabel(textblock));
-            right.changepath.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => ChangePath(oldPath));
-            right.DeleteButton.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => DeleteFile(path, gridToDelete));
-            right.openfolderpath.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => OpenFilePath(path));
-            right.property.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => OpenProperty(path));
+            right.open.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { OpenFileProcess(path);right.Close(); });
+            right.rename.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { RenameLabel(path, textblock);right.Close(); });
+            right.changepath.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { ChangePath(oldPath); right.Close(); });
+            right.DeleteButton.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { DeleteFile(path, gridToDelete); right.Close(); });
+            right.DeleteinProgram.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { DeleteInProgram(path, gridToDelete); right.Close(); });
+            right.openfolderpath.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { OpenFilePath(path); right.Close(); });
+            right.property.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { OpenProperty(path); right.Close(); });
 
             int entry = 0;
             Point MouseP = new Point { X = GetMousePosition().X, Y = GetMousePosition().Y };
@@ -286,9 +321,19 @@ namespace Oveger
             right.Show();
         }
 
-        private void RenameLabel(TextBlock textblockvalue)
+        private void RenameLabel(string path,TextBlock textblock)
         {
-            Console.WriteLine("RENAMED");
+            Hide();
+            LocalRenameWindow localRename = new LocalRenameWindow();
+            localRename.Show();
+            localRename.ConfirmButton.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) =>
+            {
+                string Filename = localRename.renamedbox.Text;
+                textblock.Text = Filename;
+                ConfigManager.RenameLabel(path,Filename);
+                localRename.Close();
+                Show();
+            });
         }
         private void ChangePath(string oldPath)
         {
@@ -313,8 +358,6 @@ namespace Oveger
         }
         private void DeleteFile(string path, Grid grid)
         {
-            Console.WriteLine(grid.Name);
-            Console.WriteLine(path);
             MessageBoxResult dialog =  MessageBox.Show(this, $"Deseja deletar {Path.GetFileName(path)} permanentemente?", "Confirmação", MessageBoxButton.YesNo);
             if (dialog == MessageBoxResult.Yes)
             {
@@ -327,6 +370,13 @@ namespace Oveger
                     ConfigManager.verifyPaths(false);
                 }catch(Exception ex) {Console.WriteLine(ex);}
             }
+        }
+        private void DeleteInProgram(string path, Grid grid)
+        {
+            wrappanel1.Children.Remove(grid);
+            if (path.Contains(".mp4"))
+                File.Delete(Path.Combine("thumbnails", Path.GetFileName(path) + ".jpg"));
+            ConfigManager.Remove(path);
         }
         private Process OpenFilePath(string path)
         {
@@ -360,7 +410,7 @@ namespace Oveger
             }
         }
 
-        private ImageBrush ConvertedExeImage(System.Drawing.Bitmap img)
+        private ImageBrush ConvertBitmapToImageBrush(System.Drawing.Bitmap img)
         {
             ImageBrush ib = new ImageBrush();
             BitmapSource bitmapSource = Imaging.CreateBitmapSourceFromHBitmap(img.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
@@ -431,16 +481,8 @@ namespace Oveger
 
         public System.Drawing.Icon ExtractIconfromFile(string pathEXE)
         {
-            System.Drawing.Icon result = (System.Drawing.Icon)null;
-
-            try
-            {
-                result = System.Drawing.Icon.ExtractAssociatedIcon(pathEXE);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ERRO AO EXTRAIR ICON {ex}");
-            }
+            System.Drawing.Icon result = null;
+            result = System.Drawing.Icon.ExtractAssociatedIcon(pathEXE);
             return result;
         }
 
@@ -468,6 +510,23 @@ namespace Oveger
                 Show();
             }
             return IntPtr.Zero;
+        }
+
+
+        public static string GetLnkPath(string path)
+        {
+            string pathOnly = Path.GetDirectoryName(path);
+            string filenameOnly = Path.GetFileName(path);
+
+            Shell shell = new Shell();
+            Folder folder = shell.NameSpace(pathOnly);
+            FolderItem folderItem = folder.ParseName(filenameOnly);
+            if (folderItem != null)
+            {
+                ShellLinkObject link = (ShellLinkObject)folderItem.GetLink;
+                return link.Path;
+            }
+            return string.Empty;
         }
     }
 }

@@ -15,22 +15,18 @@ using System.Windows.Shapes;
 namespace Oveger.XAMLS
 {
     /// <summary>
-    /// Lógica interna para RightButtonClick.xaml
+    /// Lógica interna para LocalRenameWindow.xaml
     /// </summary>
-    public partial class RightButtonClick : Window
+    public partial class LocalRenameWindow : Window
     {
-        public RightButtonClick()
+        public LocalRenameWindow()
         {
             InitializeComponent();
         }
 
-        private void Window_Deactivated(object sender, EventArgs e)
+        private void Window_Initialized(object sender, EventArgs e)
         {
-            try
-            {
-                Close();
-            }
-            catch { }   
+
         }
     }
 }

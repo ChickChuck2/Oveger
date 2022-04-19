@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -7,6 +8,9 @@ namespace Oveger.XAMLS
 {
     internal class VariablesClasses
     {
+        public static readonly string AppPath = Directory.GetCurrentDirectory() + @"\Oveger.exe";
+
+
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
         static extern bool ShellExecuteEx(ref SHELLEXECUTEINFO lpExecInfo);
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]

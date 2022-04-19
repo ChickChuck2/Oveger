@@ -8,18 +8,22 @@
         Title="Overger"
         Foreground="White"
         FontFamily="Microsoft YaHei UI Light"
-        WindowStyle="None"
         Width="{x:Static SystemParameters.PrimaryScreenWidth}"
         Height="{x:Static SystemParameters.PrimaryScreenHeight}"
+        WindowStyle="None"
         ShowInTaskbar="False"
         Topmost="True"
-        WindowState="Maximized"
         AllowsTransparency="True"
+        WindowState="Maximized"
+        Loaded="Window1_Loaded"
         Initialized="window1_initialized">
     <Window.Background>
         <SolidColorBrush Opacity="0.45" Color="#FF1F1F1F"/>
     </Window.Background>
-
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static local:MainWindow.MyCommand}" 
+                     Executed="MyCommandExecuted"/>
+    </Window.CommandBindings>
     <Window.Resources>
 
         <Style TargetType="Button" x:Key="TabButtonCircle">
@@ -88,6 +92,5 @@
         Width="{x:Static SystemParameters.PrimaryScreenWidth}"
         Height="683" VerticalAlignment="Top"/>
         <Canvas Width="51"/>
-        <CheckBox x:Name="expandCBox" Content="Categorizar por extensão" Foreground="White" Background="White" FontWeight="Normal"/>
     </WrapPanel>
 </Window>

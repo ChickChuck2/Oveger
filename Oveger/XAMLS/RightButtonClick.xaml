@@ -96,7 +96,24 @@
             <Button.Template>
                 <ControlTemplate TargetType="Button">
                     <Border Style="{StaticResource borderStyle}">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="Red" Offset="-0.4" />
+                                <GradientStop Color="#696969" Offset="0.5"/>
+                                <GradientStop Color="Red" Offset="1.46"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
                         <ContentPresenter Style="{StaticResource contentButton}" Content="Excluir Arquivo"/>
+                    </Border>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+        <Canvas Height="1"></Canvas>
+        <Button Width="180" x:Name="DeleteinProgram">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border Style="{StaticResource borderStyle}">
+                        <ContentPresenter Style="{StaticResource contentButton}" Content="Excluir no programa"/>
                     </Border>
                 </ControlTemplate>
             </Button.Template>

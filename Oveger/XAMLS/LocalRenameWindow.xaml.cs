@@ -19,6 +19,12 @@ namespace Oveger.XAMLS
     /// </summary>
     public partial class LocalRenameWindow : Window
     {
+
+        public static RoutedCommand MyCommand = new RoutedCommand();
+        private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            Close();
+        }
         public LocalRenameWindow()
         {
             InitializeComponent();
@@ -26,7 +32,7 @@ namespace Oveger.XAMLS
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-
+            MyCommand.InputGestures.Add(new KeyGesture(Key.Escape));
         }
     }
 }

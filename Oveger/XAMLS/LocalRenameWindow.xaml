@@ -9,10 +9,13 @@
         ShowInTaskbar="False"
         WindowStyle="None"
         Initialized="Window_Initialized"
-        Title="LocalRenameWindow" Height="114" Width="292">
+        Title="LocalRenameWindow" Height="127" Width="292">
     <Window.Background>
         <SolidColorBrush Color="#292929"/>
     </Window.Background>
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static local:LocalRenameWindow.MyCommand}" Executed="MyCommandExecuted"/>
+    </Window.CommandBindings>
     <Grid>
         <TextBox HorizontalAlignment="Center" Margin="0,31,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="272" x:Name="renamedbox"/>
         <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Nome" VerticalAlignment="Top" Foreground="White"/>

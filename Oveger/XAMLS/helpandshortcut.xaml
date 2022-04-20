@@ -1,4 +1,4 @@
-﻿<Window x:Class="Oveger.XAMLS.helpandshortcut"
+﻿<Window x:Class="Oveger.XAMLS.Helpandshortcut"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -19,7 +19,7 @@
         </Style>
     </Window.Resources>
     <Window.CommandBindings>
-        <CommandBinding Command="{x:Static local:helpandshortcut.MyCommand}" Executed="MyCommandExecuted"/>
+        <CommandBinding Command="{x:Static local:Helpandshortcut.MyCommand}" Executed="MyCommandExecuted"/>
     </Window.CommandBindings>
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="XXXXX" VerticalAlignment="Top" Style="{StaticResource cur }" x:Name="infokey"/>

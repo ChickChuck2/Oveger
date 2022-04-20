@@ -18,9 +18,9 @@ namespace Oveger.XAMLS
     /// <summary>
     /// Lógica interna para helpandshortcut.xaml
     /// </summary>
-    public partial class helpandshortcut : Window
+    public partial class Helpandshortcut : Window
     {
-        public helpandshortcut()
+        public Helpandshortcut()
         {
             InitializeComponent();
         }

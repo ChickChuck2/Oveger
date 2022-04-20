@@ -89,7 +89,7 @@ namespace Oveger
             Hide();
 
             ConfigManager.LoadOrCreate(this);
-            ConfigManager.verifyPaths(true);
+            ConfigManager.VerifyPaths(true);
         }
 
         public async Task VerifyPaths(Action action)
@@ -122,7 +122,7 @@ namespace Oveger
             });
             changehotkey.Click += new EventHandler((object sender, EventArgs e) =>
             {
-                helpandshortcut helpandshortcut = new helpandshortcut();
+                Helpandshortcut helpandshortcut = new Helpandshortcut();
                 helpandshortcut.Show();
             });
 
@@ -304,7 +304,7 @@ namespace Oveger
                     File.Delete(path);
                     if (path.Contains(".mp4"))
                         File.Delete(Path.Combine("thumbnails", Path.GetFileName(path)+".jpg"));
-                    ConfigManager.verifyPaths(false);
+                    ConfigManager.VerifyPaths(false);
                 }catch(Exception ex) {Console.WriteLine(ex);}
             }
         }
@@ -443,6 +443,11 @@ namespace Oveger
                 Show();
             }
             return IntPtr.Zero;
+        }
+
+        private void Window1_Closed(object sender, EventArgs e)
+        {
+            notifyIcon.Visible = false;
         }
     }
 }

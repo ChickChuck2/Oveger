@@ -11,6 +11,9 @@
     <Window.Background>
         <SolidColorBrush Color="#292929"/>
     </Window.Background>
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static local:ChangePathForm.MyCommand}" Executed="MyCommandExecuted"/>
+    </Window.CommandBindings>
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Caminho antigo" VerticalAlignment="Top" Foreground="White"/>
         <TextBox x:Name="oldPathBox" HorizontalAlignment="Left" Margin="95,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="329" Background="#494949" Foreground="White" IsReadOnly="True"/>
@@ -40,7 +43,7 @@
                 </ControlTemplate>
             </Button.Template>
         </Button>
-        <Button Margin="401,59,6,0" VerticalAlignment="Top" Height="19" x:Name="choosePath" Click="choosePath_Click">
+        <Button Margin="401,59,6,0" VerticalAlignment="Top" Height="19" x:Name="choosePath" Click="ChoosePath_Click">
         </Button>
     </Grid>
 </Window>

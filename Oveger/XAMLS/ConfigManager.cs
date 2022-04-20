@@ -41,10 +41,12 @@ namespace Oveger.XAMLS
         {
             string json = File.ReadAllText(FileName);
             dynamic jsonobj = JsonConvert.DeserializeObject(json);
-            JArray hotkeys = new JArray();
-            hotkeys.Add(Enum.GetName(typeof(MainWindow.Modifiers), mod1));
-            hotkeys.Add(Enum.GetName(typeof(MainWindow.Modifiers), mod2));
-            hotkeys.Add(Enum.GetName(typeof(Keys), key));
+            JArray hotkeys = new JArray
+            {
+                Enum.GetName(typeof(MainWindow.Modifiers), mod1),
+                Enum.GetName(typeof(MainWindow.Modifiers), mod2),
+                Enum.GetName(typeof(Keys), key)
+            };
 
             jsonobj.hotkeys = hotkeys;
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
@@ -126,8 +128,7 @@ namespace Oveger.XAMLS
                     using (StreamWriter file = File.CreateText(FileName))
                     {
                         JObject JOBe = JObject.Parse(sb.ToString());
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Formatting = Formatting.Indented;
+                        JsonSerializer serializer = new JsonSerializer { Formatting = Formatting.Indented };
                         serializer.Serialize(file, JOBe);
                         file.Dispose();
                     }
@@ -154,7 +155,7 @@ namespace Oveger.XAMLS
             return (bool)jsonobj.startWithWindows;
         }
 
-        public static void verifyPaths(bool warn)
+        public static void VerifyPaths(bool warn)
         {
             string json = File.ReadAllText(FileName);
             dynamic jsonobj = JsonConvert.DeserializeObject(json);

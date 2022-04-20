@@ -3,6 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -17,11 +18,19 @@ namespace Oveger.XAMLS
         {
             InitializeComponent();
         }
-        public string oldpath { get; set; }
-        public string newpath { get; set; }
+        public string Oldpath { get; set; }
+        public string Newpath { get; set; }
+
+        public static RoutedCommand MyCommand = new RoutedCommand();
+        private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            Close();
+        }
 
         private void Window_Initialized(object sender, EventArgs e)
         {
+            MyCommand.InputGestures.Add(new KeyGesture(Key.Escape));
+
             BitmapImage image = new BitmapImage(new Uri("https://github.com/ChickChuck2/Oveger/blob/master/Oveger/Resources/findpath.png?raw=true", UriKind.Absolute));
             choosePath.Style = new Style()
             {
@@ -37,7 +46,7 @@ namespace Oveger.XAMLS
                 }
             };
         }
-        private void choosePath_Click(object sender, RoutedEventArgs e)
+        private void ChoosePath_Click(object sender, RoutedEventArgs e)
         {
             FolderBrowserDialog dialog = new FolderBrowserDialog();
 

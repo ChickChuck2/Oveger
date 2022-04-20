@@ -163,11 +163,15 @@ namespace Oveger.XAMLS
                 if (File.Exists(path))
                     PathsSTR.Add(path);
                 else
-                    if (warn)
-                    System.Windows.MessageBox.Show($"[{Path.GetFileName(path)}] NÃO ENCONTRADO\n-- {path} ", "LOCAL NÃO ENCONTRADO");
-            jsonobj.Paths = PathsSTR;
-            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-            File.WriteAllText(FileName, output);
+                    if(warn)
+                        System.Windows.MessageBox.Show($"[{Path.GetFileName(path)}] NÃO ENCONTRADO\n-- {path} ", "LOCAL NÃO ENCONTRADO");
+
+            if(PathsSTR.Count != jsonobj.Paths.Count)
+            {
+                jsonobj.Paths = PathsSTR;
+                string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+                File.WriteAllText(FileName, output);
+            }
         }
         public static void Remove(string path)
         {

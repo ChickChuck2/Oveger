@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -26,7 +25,7 @@ namespace Oveger
     /// </summary>
     public partial class MainWindow : Window
     {
-        VariablesClasses variables = new VariablesClasses();
+        readonly VariablesClasses variables = new VariablesClasses();
 
         public MainWindow()
         {
@@ -40,50 +39,11 @@ namespace Oveger
         }
 
         [Flags]
-        public enum Modifiers
-        {
-            NoMod = 0x0000,
-            Alt = 0x0001,
-            Ctrl = 0x0002,
-            Shift = 0x0004,
-            Win = 0x0008
-        }
+        public enum Modifiers { NoMod = 0x0000, Alt = 0x0001, Ctrl = 0x0002, Shift = 0x0004, Win = 0x0008 }
 
         public readonly List<string> ImageExtensions = new List<string> { ".JPG", ".JPE", ".BMP", ".GIF", ".PNG", "JPGE" };
 
         private System.Windows.Forms.NotifyIcon notifyIcon = null;
-
-        private async Task DownloadFile(string URL, string fileName)
-        {
-            DownloadProgress progress = new DownloadProgress();
-            progress.Show();
-            progress.SetText(fileName);
-
-            // Create a new WebClient instance.
-            WebClient myWebClient = new WebClient();
-            // Download the Web resource and save it into the current filesystem folder.
-            myWebClient.Headers.Add("User-Agent", "Mozilla/4.0 (compatible; MSIE 8.0)");
-            myWebClient.DownloadProgressChanged += new DownloadProgressChangedEventHandler((object sender, DownloadProgressChangedEventArgs e )=>
-            {
-                Application.Current.Dispatcher.BeginInvoke(
-                    System.Windows.Threading.DispatcherPriority.Background,
-                    new Action(() =>  {try {progress.progressDownload.Value = e.ProgressPercentage;} catch { progress.Show(); }; }));
-            });
-            myWebClient.DownloadFileCompleted += new AsyncCompletedEventHandler((object sender, AsyncCompletedEventArgs e) =>
-            {
-                Application.Current.Dispatcher.BeginInvoke(
-                    System.Windows.Threading.DispatcherPriority.Background,
-                    new Action(() =>
-                    {
-                        progress.Background = new SolidColorBrush(Colors.Green);
-                        progress.Opacity = 0.75f;
-                        progress.setSeconds(5);
-                    }));
-            });
-
-            Uri uriS = new Uri(URL);
-            await Task.Run(() => myWebClient.DownloadFileAsync(uriS, fileName));
-        }
 
         private void CreateAddButton()
         {
@@ -91,8 +51,8 @@ namespace Oveger
             TextBlock ItemName = new TextBlock();
             Button addnewitem = new Button();
 
-            wrappanel1.Width = wrappanel1.Width - 50;
-            wrappanel1.Height = wrappanel1.Height - 50;
+            wrappanel1.Width = wrappanel1.Width -= 50;
+            wrappanel1.Height = wrappanel1.Height -= 50;
 
             // BUTTON START SETTINGS
             addItemGrid.Width = 70;
@@ -114,31 +74,14 @@ namespace Oveger
 
             wrappanel1.Children.Add(addItemGrid);
         }
-        private void window1_initialized(object sender, EventArgs e)
+        private void Window1_initialized(object sender, EventArgs e)
         {
-            WindowsIdentity identity = WindowsIdentity.GetCurrent();
-            WindowsPrincipal principal = new WindowsPrincipal(identity);
-            bool isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
-            if (!isAdmin)
-            {
-                //Public domain; no attribution required.
-                ProcessStartInfo info = new ProcessStartInfo(VariablesClasses.AppPath);
-                info.UseShellExecute = true;
-                info.Verb = "runas";
-                Process.Start(info);
-                Process.GetCurrentProcess().Kill();
-
-            }
-
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             MyCommand.InputGestures.Add(new KeyGesture(Key.Escape));
             CreateAddButton();
         }
-        public string[] Hotkeys { get; set; }
         private void Window1_Loaded(object sender, RoutedEventArgs e)
         {
-            var source = PresentationSource.FromVisual(this) as HwndSource;
-            if (source == null)
+            if (!(PresentationSource.FromVisual(this) is HwndSource source))
                 throw new Exception("Could not create hWnd source from window.");
             source.AddHook(WndProc);
             RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
@@ -149,11 +92,23 @@ namespace Oveger
             ConfigManager.verifyPaths(true);
         }
 
-        System.Windows.Forms.ContextMenuStrip context = new System.Windows.Forms.ContextMenuStrip();
-        System.Windows.Forms.ToolStripMenuItem close = new System.Windows.Forms.ToolStripMenuItem { Text = "Fechar" };
-        System.Windows.Forms.ToolStripMenuItem show = new System.Windows.Forms.ToolStripMenuItem { Text = "Mostrar" };
-        System.Windows.Forms.ToolStripMenuItem StartWithWindows = new System.Windows.Forms.ToolStripMenuItem { Text = "Iniciar com Windows" };
-        System.Windows.Forms.ToolStripMenuItem changehotkey = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
+        public async Task VerifyPaths(Action action)
+        {
+            while(true)
+            {
+                action();
+                Task task = Task.Delay(TimeSpan.FromMinutes(30));
+
+                try { await task; }
+                catch{ return; }
+            }
+        }
+
+        readonly System.Windows.Forms.ContextMenuStrip context = new System.Windows.Forms.ContextMenuStrip();
+        readonly System.Windows.Forms.ToolStripMenuItem close = new System.Windows.Forms.ToolStripMenuItem { Text = "Fechar" };
+        readonly System.Windows.Forms.ToolStripMenuItem show = new System.Windows.Forms.ToolStripMenuItem { Text = "Mostrar" };
+        readonly System.Windows.Forms.ToolStripMenuItem StartWithWindows = new System.Windows.Forms.ToolStripMenuItem { Text = "Iniciar com Windows" };
+        readonly System.Windows.Forms.ToolStripMenuItem changehotkey = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
 
         private void TaskbarInitialize()
         {
@@ -179,11 +134,7 @@ namespace Oveger
             //context.Container.Add(close);
 
             IntPtr icon = Properties.Resources.icon.GetHicon();
-            notifyIcon = new System.Windows.Forms.NotifyIcon();
-            notifyIcon.Text = "Oveger";
-            notifyIcon.ContextMenuStrip = context;
-            notifyIcon.Icon = System.Drawing.Icon.FromHandle(icon);
-            notifyIcon.Visible = true;
+            notifyIcon = new System.Windows.Forms.NotifyIcon { Text = "Oveger", ContextMenuStrip = context, Icon = System.Drawing.Icon.FromHandle(icon), Visible = true };
             notifyIcon.MouseClick += new System.Windows.Forms.MouseEventHandler((object sender, System.Windows.Forms.MouseEventArgs e) =>
             {
                 if (e.Button == System.Windows.Forms.MouseButtons.Left)
@@ -192,24 +143,14 @@ namespace Oveger
         }
         private void CreateButtonFile()
         {
-            OpenFileDialog AddItem = new OpenFileDialog();
-            AddItem.Multiselect = true;
-            AddItem.DereferenceLinks = false;
-            AddItem.Filter = "All files|*.*" +
-                "|images|*.png;*.jpeg;*.jpg" +
-                "|exe|*.exe" +
-                "|gif|*.gif";
+            OpenFileDialog AddItem = new OpenFileDialog { Multiselect = true, DereferenceLinks = false, Filter = "All files|*.*" + "|images|*.png;*.jpeg;*.jpg" + "|exe|*.exe" + "|gif|*.gif" };
             if (AddItem.ShowDialog() == true)
             {
                 string[] paths = AddItem.FileNames;
 
                 foreach(string path in paths)
                 {
-                    string VPath = path;
-                    if(Path.GetExtension(path).ToUpper() == ".lnk".ToUpper())
-                        VPath = GetLnkPath(path);
-                    SetConfig(VPath);
-                    ConfigManager.Save(StartWithWindows.Checked, VPath);
+                    ConfigManager.Save(StartWithWindows.Checked, path);
                 }
             }
         }
@@ -227,16 +168,13 @@ namespace Oveger
 
             ImageBrush img = new ImageBrush() { Stretch = Stretch.UniformToFill };
             if (ImageExtensions.Contains(EXT) || EXT.Contains(".gif".ToUpper()))
-                setButtonConfig(TypeofGet.Icon, img, addnewitem, path);
+                SetButtonConfig(TypeofGet.Icon, img, addnewitem, path);
             else if (EXT.Contains(".exe".ToUpper()) || EXT.Contains(".url".ToUpper()))
             {
-                img = ConvertBitmapToImageBrush(ExtractIconfromFile(path).ToBitmap());
-                addnewitem.Style = setStyle(addnewitem, img);
-            }
-            else if (EXT.Contains(".lnk".ToUpper()))
-            {
-                img = ConvertBitmapToImageBrush(ExtractIconfromFile(path).ToBitmap());
-                setButtonConfig(TypeofGet.IconEXT, img, addnewitem, path);
+                System.Drawing.Bitmap Extracted = ExtractIconfromFile(path).ToBitmap();
+                img = ConvertBitmapToImageBrush(Extracted);
+                addnewitem.Style = SetStyle(addnewitem, img);
+                Extracted.Dispose();
             }
             else if (EXT.Contains(".mp4".ToUpper()) || EXT.Contains(".mkv".ToUpper()) || EXT.Contains(".webp".ToUpper()))
             {
@@ -249,23 +187,22 @@ namespace Oveger
                 if (!File.Exists(Path.Combine(thumbDirectory, thumbnail)))
                     ffMpeg.GetVideoThumbnail(path, @"thumbnails\" + thumbnail);
                 img.ImageSource = SetImage(thumbFileDir);
-                addnewitem.Style = setStyle(addnewitem, img);
+                addnewitem.Style = SetStyle(addnewitem, img);
             }
             else
-                setButtonConfig(TypeofGet.IconEXT, img, addnewitem, path);
+                SetButtonConfig(TypeofGet.IconEXT, img, addnewitem, path);
 
             addnewitem.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => OpenFileProcess(path));
             addnewitem.MouseRightButtonDown += new MouseButtonEventHandler((object sender, MouseButtonEventArgs e) => PropertyRighClick(path, addItemGrid, ItemName));
         }
         private enum TypeofGet { IconEXT, Icon }
-        private void setButtonConfig(TypeofGet type,ImageBrush img, Button addnewitem, string path)
+        private void SetButtonConfig(TypeofGet type,ImageBrush img, Button addnewitem, string path)
         {
-            Console.WriteLine($"EXTRACTING ICON FROM {path}");
             if(type == TypeofGet.IconEXT)
                 img.ImageSource = IconManager.FindIconForFilename(path, true);
             else
                 img.ImageSource = SetImage(path);
-            addnewitem.Style = setStyle(addnewitem, img);
+            addnewitem.Style = SetStyle(addnewitem, img);
         }
 
         private ImageSource SetImage(string FilePath)
@@ -315,8 +252,8 @@ namespace Oveger
 
             right.Left = MouseP.X - 50;
             right.Top = MouseP.Y + 30;
-            right.MouseEnter += new MouseEventHandler((object sender1, MouseEventArgs e1) => entry = entry + 1);
-            right.MouseLeave += new MouseEventHandler((object sender1, MouseEventArgs e1) => { entry = entry + 1; if (entry > 1) right.Hide(); entry = 0; });
+            right.MouseEnter += new MouseEventHandler((object sender1, MouseEventArgs e1) => entry++);
+            right.MouseLeave += new MouseEventHandler((object sender1, MouseEventArgs e1) => { entry++; if (entry > 1) right.Hide(); entry = 0; });
 
             right.Show();
         }
@@ -419,7 +356,7 @@ namespace Oveger
             return ib;
         }
 
-        private Style setStyle(Button addnewitem, object img)
+        private Style SetStyle(Button addnewitem, ImageBrush img)
         {
             DataTrigger tg = new DataTrigger()
             {
@@ -456,33 +393,29 @@ namespace Oveger
             return addnewitem.Style;
         }
 
-        private FrameworkElementFactory CreateFactory(object img)
+        private FrameworkElementFactory CreateFactory(ImageBrush img)
         {
             // --START OF MAIN FACTORY-- //
             FrameworkElementFactory factory = new FrameworkElementFactory(typeof(Border));
             factory.SetValue(Border.BackgroundProperty, img);
-            factory.SetValue(Border.CornerRadiusProperty, new CornerRadius
-            { TopLeft = 10, TopRight = 10, BottomLeft = 10, BottomRight = 10 });
+            factory.SetValue(Border.CornerRadiusProperty, new CornerRadius { TopLeft = 10, TopRight = 10, BottomLeft = 10, BottomRight = 10 });
             factory.SetValue(Border.BorderBrushProperty, BRUSHERHEX("#696969"));
-            factory.SetValue(Border.BorderThicknessProperty, new Thickness
-            { Top = 1, Left = 1, Right = 1, Bottom = 1, });
+            factory.SetValue(Border.BorderThicknessProperty, new Thickness { Top = 1, Left = 1, Right = 1, Bottom = 1, });
             // --END OF MAIN FACTORY-- //
 
             FrameworkElementFactory contentFactory = new FrameworkElementFactory(typeof(ContentPresenter));
-            contentFactory.SetValue(ContentPresenter.MarginProperty, new Thickness
-            { Top = -1, Left = -1, Right = -1, Bottom = -1 });
+            contentFactory.SetValue(ContentPresenter.MarginProperty, new Thickness { Top = -1, Left = -1, Right = -1, Bottom = -1 });
             contentFactory.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
             contentFactory.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
             //contentFactory.SetValue(ContentPresenter.ContentProperty, "-");
             factory.AppendChild(contentFactory);
             return factory;
-
         }
 
-        public System.Drawing.Icon ExtractIconfromFile(string pathEXE)
+        public System.Drawing.Icon ExtractIconfromFile(string path)
         {
-            System.Drawing.Icon result = null;
-            result = System.Drawing.Icon.ExtractAssociatedIcon(pathEXE);
+            Console.WriteLine($"EXTRACTING FROM {path}");
+            System.Drawing.Icon result = System.Drawing.Icon.ExtractAssociatedIcon(path);
             return result;
         }
 
@@ -510,23 +443,6 @@ namespace Oveger
                 Show();
             }
             return IntPtr.Zero;
-        }
-
-
-        public static string GetLnkPath(string path)
-        {
-            string pathOnly = Path.GetDirectoryName(path);
-            string filenameOnly = Path.GetFileName(path);
-
-            Shell shell = new Shell();
-            Folder folder = shell.NameSpace(pathOnly);
-            FolderItem folderItem = folder.ParseName(filenameOnly);
-            if (folderItem != null)
-            {
-                ShellLinkObject link = (ShellLinkObject)folderItem.GetLink;
-                return link.Path;
-            }
-            return string.Empty;
         }
     }
 }

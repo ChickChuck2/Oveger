@@ -16,7 +16,7 @@
         AllowsTransparency="True"
         WindowState="Maximized"
         Loaded="Window1_Loaded"
-        Initialized="window1_initialized">
+        Initialized="Window1_initialized">
     <Window.Background>
         <SolidColorBrush Opacity="0.45" Color="#FF1F1F1F"/>
     </Window.Background>

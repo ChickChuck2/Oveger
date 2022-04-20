@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -15,8 +11,9 @@ namespace Oveger.XAMLS
 {
     internal static class IconManager
     {
-        private static readonly Dictionary<string, ImageSource> _smallIconCache = new Dictionary<string, ImageSource>();
-        private static readonly Dictionary<string, ImageSource> _largeIconCache = new Dictionary<string, ImageSource>();
+        //private static readonly Dictionary<string, ImageSource> _smallIconCache = new Dictionary<string, ImageSource>();
+        //private static readonly Dictionary<string, ImageSource> _largeIconCache = new Dictionary<string, ImageSource>();
+
         /// <summary>
         /// Get an icon for a given filename
         /// </summary>
@@ -28,12 +25,14 @@ namespace Oveger.XAMLS
             string extension = Path.GetExtension(fileName);
             if (extension == null)
                 return null;
-            Dictionary<string, ImageSource> cache = large ? _largeIconCache : _smallIconCache;
             ImageSource icon;
-            if (cache.TryGetValue(extension, out icon))
-                return icon;
+            //Dictionary<string, ImageSource> cache = large ? _largeIconCache : _smallIconCache;
+            //if (cache.TryGetValue(extension, out icon))
+            //    return icon;
             icon = IconReader.GetFileIcon(fileName, large ? IconReader.IconSize.Large : IconReader.IconSize.Small, false).ToImageSource();
-            cache.Add(extension, icon);
+            //cache.Add(extension, icon);
+
+            //CACHE É O CARALHO, FILHA DA PULTA, VAI TOMAR NO TEU CU, NÃO PRECISO DESSA PORRA NÃO ARROMBADO, VAI SE FODER, VOCÊ SÓ ATRAPALHOU MINHA VIDA.. EU TE ODEIO DICTIONARY
 
             return icon;
         }

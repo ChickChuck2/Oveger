@@ -86,7 +86,6 @@
     <Compile Include="XAMLS\LocalRenameWindow.xaml.cs">
       <DependentUpon>LocalRenameWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="XAMLS\RegKeyRegister.cs" />
     <Compile Include="XAMLS\RightButtonClick.xaml.cs">
       <DependentUpon>RightButtonClick.xaml</DependentUpon>
     </Compile>

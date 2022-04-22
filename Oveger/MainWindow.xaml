@@ -90,7 +90,8 @@
         x:Name="wrappanel1"
         HorizontalAlignment="Center"
         Width="{x:Static SystemParameters.PrimaryScreenWidth}"
-        Height="683" VerticalAlignment="Top"/>
+        Height="{x:Static SystemParameters.PrimaryScreenHeight}" VerticalAlignment="Top">
+        </WrapPanel>
         <Canvas Width="51"/>
     </WrapPanel>
 </Window>

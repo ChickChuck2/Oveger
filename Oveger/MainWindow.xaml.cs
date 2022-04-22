@@ -25,52 +25,50 @@ namespace Oveger
     /// </summary>
     public partial class MainWindow : Window
     {
-        readonly VariablesClasses variables = new VariablesClasses();
-
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
+        public readonly List<string> ImageExtensions = new List<string> { ".JPG", ".JPE", ".BMP", ".GIF", ".PNG", "JPGE" };
 
         public static RoutedCommand MyCommand = new RoutedCommand();
-        private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
-        {
-            Hide();
-        }
+
+        [DllImport("user32.dll")]
+        public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vlc);
+        [DllImport("user32.dll")]
+        public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
         [Flags]
         public enum Modifiers { NoMod = 0x0000, Alt = 0x0001, Ctrl = 0x0002, Shift = 0x0004, Win = 0x0008 }
-
-        public readonly List<string> ImageExtensions = new List<string> { ".JPG", ".JPE", ".BMP", ".GIF", ".PNG", "JPGE" };
+        private enum TypeofGet { GetIconEXT, GetIcon }
 
         private System.Windows.Forms.NotifyIcon notifyIcon = null;
 
+        readonly System.Windows.Forms.ContextMenuStrip context = new System.Windows.Forms.ContextMenuStrip();
+        readonly System.Windows.Forms.ToolStripMenuItem close = new System.Windows.Forms.ToolStripMenuItem { Text = "Fechar" };
+        readonly System.Windows.Forms.ToolStripMenuItem show = new System.Windows.Forms.ToolStripMenuItem { Text = "Mostrar" };
+        readonly System.Windows.Forms.ToolStripMenuItem StartWithWindows = new System.Windows.Forms.ToolStripMenuItem { Text = "Iniciar com Windows" };
+        readonly System.Windows.Forms.ToolStripMenuItem changehotkey = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
+
+        public MainWindow() => InitializeComponent();
+        private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e) => Hide();
+
+        private void Window1_Closed(object sender, EventArgs e) => notifyIcon.Visible = false;
+
         private void CreateAddButton()
         {
-            Grid addItemGrid = new Grid();
-            TextBlock ItemName = new TextBlock();
-            Button addnewitem = new Button();
 
-            wrappanel1.Width = wrappanel1.Width -= 50;
-            wrappanel1.Height = wrappanel1.Height -= 50;
-
-            // BUTTON START SETTINGS
-            addItemGrid.Width = 70;
-            addItemGrid.Height = 90;
+            Grid addItemGrid = new Grid() { Width=70, Height=148 };
+            TextBlock ItemName = new TextBlock()
+            {
+                Text = "Adicionar Arquivo",
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness { Bottom = -1, Left = -1, Right = -1, Top = 77 },
+                TextAlignment = TextAlignment.Center
+            };
+            Button addnewitem = new Button()
+            { Style = FindResource("AddButton") as Style, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness { Bottom = -1, Left = -1, Right = -1, Top = 10 } };
 
             addItemGrid.Children.Add(addnewitem);
-
-            ItemName.Text = "Adicionar Arquivo";
-            ItemName.Width = 70;
-            ItemName.Height = double.NaN;
-            ItemName.Margin = new Thickness { Top = 77 };
-            ItemName.TextAlignment = TextAlignment.Center;
-
             addItemGrid.Children.Add(ItemName);
 
-            addnewitem.Style = FindResource("AddButton") as Style;
-            addnewitem.Click += new RoutedEventHandler((object sender1, RoutedEventArgs e1) => CreateButtonFile());
-            //BUTTON END SETTINGS
+            addnewitem.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => CreateButtonFile());
 
             wrappanel1.Children.Add(addItemGrid);
         }
@@ -84,12 +82,13 @@ namespace Oveger
             if (!(PresentationSource.FromVisual(this) is HwndSource source))
                 throw new Exception("Could not create hWnd source from window.");
             source.AddHook(WndProc);
-            RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
-            TaskbarInitialize();
-            Hide();
 
             ConfigManager.LoadOrCreate(this);
             ConfigManager.VerifyPaths(true);
+
+            RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
+            TaskbarInitialize();
+            Hide();
         }
 
         public async Task VerifyPaths(Action action)
@@ -103,13 +102,6 @@ namespace Oveger
                 catch{ return; }
             }
         }
-
-        readonly System.Windows.Forms.ContextMenuStrip context = new System.Windows.Forms.ContextMenuStrip();
-        readonly System.Windows.Forms.ToolStripMenuItem close = new System.Windows.Forms.ToolStripMenuItem { Text = "Fechar" };
-        readonly System.Windows.Forms.ToolStripMenuItem show = new System.Windows.Forms.ToolStripMenuItem { Text = "Mostrar" };
-        readonly System.Windows.Forms.ToolStripMenuItem StartWithWindows = new System.Windows.Forms.ToolStripMenuItem { Text = "Iniciar com Windows" };
-        readonly System.Windows.Forms.ToolStripMenuItem changehotkey = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
-
         private void TaskbarInitialize()
         {
             close.Click += new EventHandler((object sender, EventArgs e) => Process.GetCurrentProcess().Kill());
@@ -150,6 +142,8 @@ namespace Oveger
 
                 foreach(string path in paths)
                 {
+
+                    SetConfig(path);
                     ConfigManager.Save(StartWithWindows.Checked, path);
                 }
             }
@@ -159,16 +153,17 @@ namespace Oveger
         {
             string EXT = Path.GetExtension(path).ToUpper();
             string FileName = Path.GetFileName(path);
-            Grid addItemGrid = new Grid() { Width = 70, Height = 90 };
-            Button addnewitem = new Button() { Style = FindResource("AddButton") as Style };
-            TextBlock ItemName = new TextBlock() { Text = ConfigManager.GetLabelName(path, FileName), Width = 70, Height = double.NaN, Margin = new Thickness { Top = 77 }, TextAlignment = TextAlignment.Center };
+            Grid addItemGrid = new Grid() { Width = 70, Height = 148 };
+            Button addnewitem = new Button() { Style = FindResource("AddButton") as Style, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness { Bottom = -1, Left = -1, Right = -1, Top = 10 } };
+            TextBlock ItemName = new TextBlock() { Text = ConfigManager.GetLabelName(path, FileName), Margin = new Thickness { Bottom = -1, Left = -1, Right = -1, Top = 77 }, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap };
+
             addItemGrid.Children.Add(addnewitem);
             addItemGrid.Children.Add(ItemName);
             wrappanel1.Children.Add(addItemGrid);
 
             ImageBrush img = new ImageBrush() { Stretch = Stretch.UniformToFill };
             if (ImageExtensions.Contains(EXT) || EXT.Contains(".gif".ToUpper()))
-                SetButtonConfig(TypeofGet.Icon, img, addnewitem, path);
+                SetButtonConfig(TypeofGet.GetIcon, img, addnewitem, path);
             else if (EXT.Contains(".exe".ToUpper()) || EXT.Contains(".url".ToUpper()))
             {
                 System.Drawing.Bitmap Extracted = ExtractIconfromFile(path).ToBitmap();
@@ -190,15 +185,15 @@ namespace Oveger
                 addnewitem.Style = SetStyle(addnewitem, img);
             }
             else
-                SetButtonConfig(TypeofGet.IconEXT, img, addnewitem, path);
+                SetButtonConfig(TypeofGet.GetIconEXT, img, addnewitem, path);
 
             addnewitem.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => OpenFileProcess(path));
             addnewitem.MouseRightButtonDown += new MouseButtonEventHandler((object sender, MouseButtonEventArgs e) => PropertyRighClick(path, addItemGrid, ItemName));
         }
-        private enum TypeofGet { IconEXT, Icon }
+
         private void SetButtonConfig(TypeofGet type,ImageBrush img, Button addnewitem, string path)
         {
-            if(type == TypeofGet.IconEXT)
+            if(type == TypeofGet.GetIconEXT)
                 img.ImageSource = IconManager.FindIconForFilename(path, true);
             else
                 img.ImageSource = SetImage(path);
@@ -208,30 +203,14 @@ namespace Oveger
         private ImageSource SetImage(string FilePath)
         {
             Uri iri = new Uri(FilePath, UriKind.Relative);
-            var bitmap = new BitmapImage();
+            BitmapImage bitmap = new BitmapImage();
             bitmap.BeginInit();
             bitmap.UriSource = iri;
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
             bitmap.EndInit();
             return bitmap;
         }
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool GetCursorPos(ref Win32Point pt);
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct Win32Point
-        {
-            public Int32 X;
-            public Int32 Y;
-        };
-        public static Point GetMousePosition()
-        {
-            var w32Mouse = new Win32Point();
-            GetCursorPos(ref w32Mouse);
-
-            return new Point(w32Mouse.X, w32Mouse.Y);
-        }
+        
 
         private void PropertyRighClick(string path, Grid gridToDelete, TextBlock textblock, string oldPath = null)
         {
@@ -248,7 +227,7 @@ namespace Oveger
             right.property.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { OpenProperty(path); right.Close(); });
 
             int entry = 0;
-            Point MouseP = new Point { X = GetMousePosition().X, Y = GetMousePosition().Y };
+            Point MouseP = new Point { X = VariablesClasses.Mouse.GetMousePosition().X, Y = VariablesClasses.Mouse.GetMousePosition().Y };
 
             right.Left = MouseP.X - 50;
             right.Top = MouseP.Y + 30;
@@ -267,8 +246,9 @@ namespace Oveger
             {
                 string Filename = localRename.renamedbox.Text;
                 textblock.Text = Filename;
-                ConfigManager.RenameLabel(path,Filename);
                 localRename.Close();
+                if(ConfigManager.RenameLabel(path, Filename) > 0)
+                    ReloadButtons();
                 Show();
             });
         }
@@ -327,7 +307,7 @@ namespace Oveger
         }
         private void OpenProperty(string path)
         {
-            variables.OpenPropertyDialog(path);
+            VariablesClasses.OpenPropertyDialog(path);
             Hide();
         }
         private Process OpenFileProcess(string path)
@@ -430,12 +410,6 @@ namespace Oveger
             return (SolidColorBrush)new BrushConverter().ConvertFrom(HEXFormater);
         }
 
-        // DLL libraries used to manage hotkeys
-        [DllImport("user32.dll")]
-        public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vlc);
-        [DllImport("user32.dll")]
-        public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
-
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == 0x0312)
@@ -444,10 +418,11 @@ namespace Oveger
             }
             return IntPtr.Zero;
         }
-
-        private void Window1_Closed(object sender, EventArgs e)
+        private void ReloadButtons()
         {
-            notifyIcon.Visible = false;
+            wrappanel1.Children.Clear();
+            CreateAddButton();
+            ConfigManager.LoadOrCreate(this);
         }
     }
 }

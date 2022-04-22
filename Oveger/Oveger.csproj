@@ -72,24 +72,24 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="XAMLS\ChangePathForm.xaml.cs">
+    <Compile Include="Scripts\ChangePathForm.xaml.cs">
       <DependentUpon>ChangePathForm.xaml</DependentUpon>
     </Compile>
-    <Compile Include="XAMLS\ConfigManager.cs" />
-    <Compile Include="XAMLS\DownloadProgress.xaml.cs">
+    <Compile Include="Scripts\ConfigManager.cs" />
+    <Compile Include="Scripts\DownloadProgress.xaml.cs">
       <DependentUpon>DownloadProgress.xaml</DependentUpon>
     </Compile>
-    <Compile Include="XAMLS\helpandshortcut.xaml.cs">
+    <Compile Include="Scripts\helpandshortcut.xaml.cs">
       <DependentUpon>helpandshortcut.xaml</DependentUpon>
     </Compile>
-    <Compile Include="XAMLS\IconManager.cs" />
-    <Compile Include="XAMLS\LocalRenameWindow.xaml.cs">
+    <Compile Include="Scripts\IconManager.cs" />
+    <Compile Include="Scripts\LocalRenameWindow.xaml.cs">
       <DependentUpon>LocalRenameWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="XAMLS\RightButtonClick.xaml.cs">
+    <Compile Include="Scripts\RightButtonClick.xaml.cs">
       <DependentUpon>RightButtonClick.xaml</DependentUpon>
     </Compile>
-    <Compile Include="XAMLS\VariablesClasses.cs" />
+    <Compile Include="Scripts\VariablesClasses.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -102,23 +102,23 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="XAMLS\ChangePathForm.xaml">
+    <Page Include="Scripts\ChangePathForm.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="XAMLS\DownloadProgress.xaml">
+    <Page Include="Scripts\DownloadProgress.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="XAMLS\helpandshortcut.xaml">
+    <Page Include="Scripts\helpandshortcut.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="XAMLS\LocalRenameWindow.xaml">
+    <Page Include="Scripts\LocalRenameWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="XAMLS\RightButtonClick.xaml">
+    <Page Include="Scripts\RightButtonClick.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -137,7 +137,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="XAMLS\RegKeyRegister.cs" />
+    <Compile Include="Scripts\RegKeyRegister.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

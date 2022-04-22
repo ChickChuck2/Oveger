@@ -36,7 +36,7 @@ namespace Oveger.XAMLS
             TitleBlock.Text = $"Baixando {WhatisLove}";
         }
         private delegate void UpdateTextBox();
-        public void setSeconds(int seconds)
+        public void SetSeconds(int seconds)
         {
             UpdateTextBox updateDownbox = () => TitleBlock.Text = "Download Concluido!";
             TitleBlock.Dispatcher.Invoke(updateDownbox);

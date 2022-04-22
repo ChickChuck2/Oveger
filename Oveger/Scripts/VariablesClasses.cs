@@ -6,7 +6,7 @@ using System.Windows;
 
 namespace Oveger.XAMLS
 {
-    internal class VariablesClasses
+    static class VariablesClasses
     {
         public static readonly string AppPath = Directory.GetCurrentDirectory() + @"\Oveger.exe";
 
@@ -40,7 +40,7 @@ namespace Oveger.XAMLS
 
         private const int SW_SHOW = 5;
         private const uint SEE_MASK_INVOKEIDLIST = 12;
-        public bool OpenPropertyDialog(string path)
+        public static bool OpenPropertyDialog(string path)
         {
             SHELLEXECUTEINFO info = new SHELLEXECUTEINFO();
             info.cbSize = Marshal.SizeOf(info);
@@ -50,6 +50,27 @@ namespace Oveger.XAMLS
             info.fMask = SEE_MASK_INVOKEIDLIST;
 
             return ShellExecuteEx(ref info);
+        }
+
+        public static class Mouse
+        {
+            [DllImport("user32.dll")]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            internal static extern bool GetCursorPos(ref Win32Point pt);
+            [StructLayout(LayoutKind.Sequential)]
+            internal struct Win32Point
+            {
+                public Int32 X;
+                public Int32 Y;
+            };
+
+            public static Point GetMousePosition()
+            {
+                var w32Mouse = new Win32Point();
+                GetCursorPos(ref w32Mouse);
+
+                return new Point(w32Mouse.X, w32Mouse.Y);
+            }
         }
     }
 }

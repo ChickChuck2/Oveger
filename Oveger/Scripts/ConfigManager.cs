@@ -186,7 +186,7 @@ namespace Oveger.XAMLS
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
         }
-        public static void RenameLabel(string path, string labelName)
+        public static int RenameLabel(string path, string labelName)
         {
             string json = File.ReadAllText(FileName);
             dynamic jsonobj = JsonConvert.DeserializeObject(json);
@@ -197,9 +197,19 @@ namespace Oveger.XAMLS
             JObject jo = new JObject();
             LabelsSTR.Add(jo);
 
+            int i = 0;
+
             foreach (string pathssaved in paths)
-                if(labelsname[pathssaved] != null)
+            {
+                if (labelsname[pathssaved] != null && i == 0)
+                {
                     jo.Add(pathssaved, jsonobj.labelsname[0][pathssaved]);
+                    i++;
+                }
+                if (i >= 1 && labelsname[pathssaved] != null)
+                    i++;
+            }
+                
 
             try { jo.Add(path, labelName); }
             catch
@@ -211,6 +221,7 @@ namespace Oveger.XAMLS
             jsonobj.labelsname = LabelsSTR;
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
+            return i;
         }
         public static string GetLabelName(string path, string defaultName)
         {

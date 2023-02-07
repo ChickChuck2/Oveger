@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -47,7 +46,11 @@ namespace Oveger
         readonly System.Windows.Forms.ToolStripMenuItem changehotkey = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
 
         public MainWindow() => InitializeComponent();
-        private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e) => Hide();
+        private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            Hide();
+            inprogram = false;
+        }
 
         private void Window1_Closed(object sender, EventArgs e) => notifyIcon.Visible = false;
 
@@ -85,7 +88,6 @@ namespace Oveger
 
             ConfigManager.LoadOrCreate(this);
             ConfigManager.VerifyPaths(true);
-
             RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
             TaskbarInitialize();
             Hide();
@@ -106,6 +108,7 @@ namespace Oveger
         {
             close.Click += new EventHandler((object sender, EventArgs e) => Process.GetCurrentProcess().Kill());
             show.Click += new EventHandler((object sender, EventArgs e) => Show());
+            StartWithWindows.Checked = ConfigManager.GetBool();
             StartWithWindows.Click += new EventHandler((object sender, EventArgs e) =>
             {
                 StartWithWindows.Checked = !StartWithWindows.Checked;
@@ -409,12 +412,16 @@ namespace Oveger
         {
             return (SolidColorBrush)new BrushConverter().ConvertFrom(HEXFormater);
         }
-
+        bool inprogram = false;
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == 0x0312)
             {
-                Show();
+                if (inprogram)
+                    Hide();
+                else
+                    Show();
+                inprogram = !inprogram;
             }
             return IntPtr.Zero;
         }

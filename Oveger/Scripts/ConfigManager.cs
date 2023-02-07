@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Windows;
 using System.Windows.Forms;
 
 namespace Oveger.XAMLS
@@ -13,45 +13,32 @@ namespace Oveger.XAMLS
         private static readonly string FileName = "config.json";
         public static MainWindow.Modifiers GetMODKey(int index)
         {
-            MainWindow.Modifiers MODKey = MainWindow.Modifiers.NoMod;
-            string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
-            foreach (string key in jsonobj.hotkeys)
-                if (key.Length > 1)
-                {
-                    MODKey = (MainWindow.Modifiers)Enum.Parse(typeof(MainWindow.Modifiers), key);
-                    if (index == 0)
-                        break;
-                    index--;
-                }
-            return MODKey;
+            List<MainWindow.Modifiers> MODKey = new List<MainWindow.Modifiers>();
+            dynamic jsonobj = JsonConvert.DeserializeObject(File.ReadAllText(FileName));
+            foreach (dynamic key in jsonobj.modkeys)
+                MODKey.Add((MainWindow.Modifiers)Enum.Parse(typeof(MainWindow.Modifiers), (string)key));
+            return MODKey[index];
         }
         public static object GetKey()
         {
-            object KEY = "";
-            string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
-            foreach (string key in jsonobj.hotkeys)
-                if (key.Length == 1)
-                    KEY = Enum.Parse(typeof(Keys), key);
-            return KEY;
+            dynamic jsonobj = JsonConvert.DeserializeObject(File.ReadAllText(FileName));
+            return Enum.Parse(typeof(Keys), (string)jsonobj.KEY);
         }
 
         public static void ChangeHotkeys(Keys key, MainWindow.Modifiers mod1, MainWindow.Modifiers mod2 = MainWindow.Modifiers.NoMod)
         {
             string json = File.ReadAllText(FileName);
             dynamic jsonobj = JsonConvert.DeserializeObject(json);
-            JArray hotkeys = new JArray
+            JArray modkeys = new JArray
             {
                 Enum.GetName(typeof(MainWindow.Modifiers), mod1),
                 Enum.GetName(typeof(MainWindow.Modifiers), mod2),
-                Enum.GetName(typeof(Keys), key)
             };
 
-            jsonobj.hotkeys = hotkeys;
+            jsonobj.modkeys = modkeys;
+            jsonobj.KEY = Enum.GetName(typeof(Keys), key);
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
-            System.Windows.Forms.MessageBox.Show("AEE");
         }
 
         public static void Save(bool startwithwindows, string PathToSave = null)
@@ -105,13 +92,13 @@ namespace Oveger.XAMLS
                     writer.WriteStartObject();
                     writer.WritePropertyName("startWithWindows");
                     writer.WriteValue(false);
-                    writer.WritePropertyName("hotkeys");
+                    writer.WritePropertyName("modkeys");
                     writer.WriteStartArray();
                     writer.WriteValue(MainWindow.Modifiers.Ctrl.ToString());
                     writer.WriteValue(MainWindow.Modifiers.Alt.ToString());
-                    writer.WriteValue(Keys.S.ToString());
                     writer.WriteEndArray();
-
+                    writer.WritePropertyName("KEY");
+                    writer.WriteValue(Keys.S.ToString());
                     writer.WritePropertyName("Paths");
                     writer.WriteStartArray();
                     writer.WriteEndArray();

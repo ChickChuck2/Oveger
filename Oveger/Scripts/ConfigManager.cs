@@ -10,19 +10,19 @@ namespace Oveger.XAMLS
 {
     internal static class ConfigManager
     {
-        private static readonly string FileName = "config.json";
+        private static readonly string FileName = Application.StartupPath + @"\config.json";
         public static MainWindow.Modifiers GetMODKey(int index)
         {
             List<MainWindow.Modifiers> MODKey = new List<MainWindow.Modifiers>();
-            dynamic jsonobj = JsonConvert.DeserializeObject(File.ReadAllText(FileName));
-            foreach (dynamic key in jsonobj.modkeys)
-                MODKey.Add((MainWindow.Modifiers)Enum.Parse(typeof(MainWindow.Modifiers), (string)key));
+            JObject jsonobj = JsonConvert.DeserializeObject(File.ReadAllText(FileName)) as JObject;
+            foreach (JToken key in jsonobj["modkeys"])
+                MODKey.Add((MainWindow.Modifiers)Enum.Parse(typeof(MainWindow.Modifiers), key.ToString()));
             return MODKey[index];
         }
         public static object GetKey()
         {
-            dynamic jsonobj = JsonConvert.DeserializeObject(File.ReadAllText(FileName));
-            return Enum.Parse(typeof(Keys), (string)jsonobj.KEY);
+            JObject jsonobj = (JObject)JsonConvert.DeserializeObject(File.ReadAllText(FileName));
+            return Enum.Parse(typeof(Keys), (string)jsonobj["KEY"]);
         }
 
         public static void ChangeHotkeys(Keys key, MainWindow.Modifiers mod1, MainWindow.Modifiers mod2 = MainWindow.Modifiers.NoMod)

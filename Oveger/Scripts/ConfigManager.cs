@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -10,7 +11,9 @@ namespace Oveger.XAMLS
 {
     internal static class ConfigManager
     {
-        private static readonly string FileName = Application.StartupPath + @"\config.json";
+        private static readonly string pathFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\CyWoodsDev\Oveger\";
+        private static readonly string fileName = "config.json";
+        private static readonly string FileName = Path.Combine(pathFolder, fileName);
         public static MainWindow.Modifiers GetMODKey(int index)
         {
             List<MainWindow.Modifiers> MODKey = new List<MainWindow.Modifiers>();
@@ -40,7 +43,6 @@ namespace Oveger.XAMLS
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
         }
-
         public static void Save(bool startwithwindows, string PathToSave = null)
         {
             string json = File.ReadAllText(FileName);
@@ -82,6 +84,17 @@ namespace Oveger.XAMLS
         {
             if (!File.Exists(FileName))
             {
+                if (!Directory.Exists(pathFolder))
+                    try
+                    {
+                        Directory.CreateDirectory(pathFolder);
+                    }catch(FileNotFoundException ex)
+                    {
+                        DialogResult d = MessageBox.Show($"Seu Windows Defender bloqueou o acesso a OneDrive' Precisamos que você dê acesso a essa pasta para que possamos" +
+                            $" dar inicio a criação da pasta {pathFolder}", $"Oveger - Acesso bloqueado {ex.Message}", MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1);
+                        Process.GetCurrentProcess().Kill();
+                        Application.Exit();
+                    }
                 File.Create(FileName).Dispose();
                 StringBuilder sb = new StringBuilder();
                 StringWriter sw = new StringWriter(sb);

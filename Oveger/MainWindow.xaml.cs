@@ -316,6 +316,7 @@ namespace Oveger
         private Process OpenFileProcess(string path)
         {
             Hide();
+            inprogram = false;
             try
             {
                 Process process = new Process();
@@ -356,7 +357,7 @@ namespace Oveger
             {
                 Setters =
                 {
-                    new Setter { Property = ContentProperty, Value = "-"},
+                    //new Setter { Property = ContentProperty, Value = "-"},
                     new Setter { Property = HorizontalContentAlignmentProperty, Value = HorizontalAlignment.Center },
                     new Setter { Property = VerticalAlignmentProperty, Value = VerticalAlignment.Center },
                     new Setter { Property = WidthProperty, Value = 70d},

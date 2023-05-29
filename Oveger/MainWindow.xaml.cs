@@ -46,6 +46,8 @@ namespace Oveger
         readonly System.Windows.Forms.ToolStripMenuItem changehotkey = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
 
         public MainWindow() => InitializeComponent();
+
+
         private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
         {
             Hide();
@@ -80,6 +82,15 @@ namespace Oveger
             MyCommand.InputGestures.Add(new KeyGesture(Key.Escape));
             CreateAddButton();
         }
+
+        private void Window1_LocationChanged(object sender, EventArgs e)
+        {
+            WindowInteropHelper windowInteropHelper = new WindowInteropHelper(this);
+            System.Windows.Forms.Screen curr = System.Windows.Forms.Screen.FromHandle(windowInteropHelper.Handle);
+            wrappanel1.Width = curr.Bounds.Width;
+            wrappanel1.Height = curr.Bounds.Height;
+            Window1.UpdateLayout();
+        }
         private void Window1_Loaded(object sender, RoutedEventArgs e)
         {
             if (!(PresentationSource.FromVisual(this) is HwndSource source))
@@ -90,7 +101,9 @@ namespace Oveger
             ConfigManager.VerifyPaths(true);
             RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
             TaskbarInitialize();
+            Window1.WindowState = WindowState.Maximized;
             Hide();
+            Window1.WindowState = WindowState.Normal;
         }
 
         public async Task VerifyPaths(Action action)
@@ -349,11 +362,41 @@ namespace Oveger
             };
             tg.Setters.Add(new Setter()
             {
-                Property = Button.BackgroundProperty,
+                Property = BackgroundProperty,
                 Value = Brushes.Green
             });
 
-            addnewitem.Style = new Style(typeof(Button))
+            Trigger trigger = new Trigger
+            {
+                Property = IsMouseOverProperty,
+                Value = true
+            };
+
+            // Create a setter to change the background color
+            Setter[] setter = new Setter[]
+            {
+                new Setter()
+                {
+                    Property = HeightProperty,
+                    Value = 90d
+                },
+                new ()
+                {
+                    Property = WidthProperty,
+                    Value = 90d
+                },
+                new Setter()
+                {
+                    Property = BackgroundProperty,
+                    Value = Brushes.Red
+                }
+            };
+
+            trigger.Setters.Add(setter[0]);
+            trigger.Setters.Add(setter[1]);
+            trigger.Setters.Add(setter[2]);
+
+            var style = new Style(typeof(Button))
             {
                 Setters =
                 {
@@ -362,7 +405,6 @@ namespace Oveger
                     new Setter { Property = VerticalAlignmentProperty, Value = VerticalAlignment.Center },
                     new Setter { Property = WidthProperty, Value = 70d},
                     new Setter { Property = HeightProperty, Value = 70d},
-                    new Setter { Property = ForegroundProperty,Value = Brushes.White},
                     new Setter { Property = FontSizeProperty, Value = 30d},
                     new Setter
                     {
@@ -372,9 +414,13 @@ namespace Oveger
                             VisualTree = CreateFactory(img)
                         }
                     }
+                },
+                Triggers = 
+                {
+                    trigger
                 }
             };
-            return addnewitem.Style;
+            return style;
         }
 
         private FrameworkElementFactory CreateFactory(ImageBrush img)

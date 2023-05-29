@@ -14,9 +14,12 @@
         ShowInTaskbar="False"
         Topmost="True"
         AllowsTransparency="True"
-        WindowState="Maximized"
         Loaded="Window1_Loaded"
-        Initialized="Window1_initialized" Closed="Window1_Closed">
+        Initialized="Window1_initialized"
+        Closed="Window1_Closed"
+        LocationChanged="Window1_LocationChanged" SizeToContent="WidthAndHeight" ResizeMode="NoResize"
+        
+        >
     <Window.Background>
         <SolidColorBrush Opacity="0.45" Color="#FF1F1F1F"/>
     </Window.Background>
@@ -84,14 +87,10 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
-    <WrapPanel Width="{x:Static SystemParameters.PrimaryScreenWidth}"
-        Height="{x:Static SystemParameters.PrimaryScreenHeight}">
-        <WrapPanel
-        x:Name="wrappanel1"
-        HorizontalAlignment="Center"
+    <WrapPanel
         Width="{x:Static SystemParameters.PrimaryScreenWidth}"
-        Height="{x:Static SystemParameters.PrimaryScreenHeight}" VerticalAlignment="Top">
-        </WrapPanel>
-        <Canvas Width="51"/>
-    </WrapPanel>
+        Height="{x:Static SystemParameters.PrimaryScreenHeight}"
+        x:Name="wrappanel1"
+        HorizontalAlignment="Left"
+        VerticalAlignment="Top"/>
 </Window>

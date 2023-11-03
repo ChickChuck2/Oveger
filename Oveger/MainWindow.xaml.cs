@@ -372,28 +372,28 @@ namespace Oveger
                 Value = true
             };
 
-            // Create a setter to change the background color
-            Setter[] setter = new Setter[]
-            {
-                new Setter()
-                {
+			// Create a setter to change the background color
+			Setter[] setter =
+			[
+				new Setter()
+				{
                     Property = HeightProperty,
                     Value = 90d
                 },
-                new ()
+                new Setter ()
                 {
                     Property = WidthProperty,
                     Value = 90d
                 },
                 new Setter()
                 {
-                    Property = BackgroundProperty,
-                    Value = Brushes.Red
+                    Property = OpacityProperty,
+                    Value = 0.9
                 }
-            };
+            ];
 
-            trigger.Setters.Add(setter[0]);
-            trigger.Setters.Add(setter[1]);
+            //trigger.Setters.Add(setter[0]);
+            //trigger.Setters.Add(setter[1]);
             trigger.Setters.Add(setter[2]);
 
             var style = new Style(typeof(Button))
@@ -406,7 +406,9 @@ namespace Oveger
                     new Setter { Property = WidthProperty, Value = 70d},
                     new Setter { Property = HeightProperty, Value = 70d},
                     new Setter { Property = FontSizeProperty, Value = 30d},
-                    new Setter
+					new Setter { Property = OpacityProperty, Value = 0.7 },
+
+					new Setter
                     {
                         Property = TemplateProperty,
                         Value = new ControlTemplate(typeof(Button))

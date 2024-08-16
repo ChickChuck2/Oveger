@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
@@ -161,14 +162,34 @@ namespace Oveger.XAMLS
             dynamic jsonobj = JsonConvert.DeserializeObject(json);
             JArray PathsSTR = new JArray();
             foreach(string path in jsonobj.Paths)
+            {
                 if (File.Exists(path))
                     PathsSTR.Add(path);
-                else
-                    if(warn)
-                        System.Windows.MessageBox.Show($"[{Path.GetFileName(path)}] NÃO ENCONTRADO\n-- {path} ", "LOCAL NÃO ENCONTRADO");
+				else
+				{
+                    bool finded = false;
+					var subDirectories = Directory.GetDirectories(Path.GetDirectoryName(path)).ToList();
+					foreach(var i in subDirectories)
+					{
+						var filename = Path.GetFileName(path);
+                        Console.WriteLine($"Checking {filename} in {i} ({i}\\{filename}) ({File.Exists($@"{i}\{filename}")})");
 
-            if(PathsSTR.Count != jsonobj.Paths.Count)
+						if (File.Exists($@"{i}\{filename}"))
+                        {
+							MessageBox.Show($"{filename} foi movido para a pasta {i}\\{filename}", "Arquivo Movido");
+                            PathsSTR.Add($@"{i}\{filename}");
+                            finded = true;
+                            break;
+                        }
+					};
+					if (warn && !finded)
+						System.Windows.MessageBox.Show($"[{Path.GetFileName(path)}] NÃO ENCONTRADO\n-- {path} ", "LOCAL NÃO ENCONTRADO");
+				}
+            }
+
+            if(PathsSTR.Count > 0)
             {
+                Console.WriteLine("ENTROIU!!!!!!");
                 jsonobj.Paths = PathsSTR;
                 string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
                 File.WriteAllText(FileName, output);

@@ -56,7 +56,15 @@ namespace Oveger
 
         private void Window1_Closed(object sender, EventArgs e) => notifyIcon.Visible = false;
 
-        private void CreateAddButton()
+
+
+		private bool _isMoving;
+		private Point? _buttonPosition;
+		private double deltaX;
+		private double deltaY;
+		private TranslateTransform _currentTT;
+
+		private void CreateAddButton()
         {
 
             Grid addItemGrid = new Grid() { Width=70, Height=148 };
@@ -99,7 +107,8 @@ namespace Oveger
 
             ConfigManager.LoadOrCreate(this);
             ConfigManager.VerifyPaths(true);
-            RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
+            ReloadButtons();
+			RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
             TaskbarInitialize();
             Window1.WindowState = WindowState.Maximized;
             Hide();
@@ -203,7 +212,11 @@ namespace Oveger
             else
                 SetButtonConfig(TypeofGet.GetIconEXT, img, addnewitem, path);
 
-            addnewitem.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => OpenFileProcess(path));
+            addnewitem.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) =>
+            {
+                if (!_isMoving)
+                    OpenFileProcess(path);
+			});
             addnewitem.MouseRightButtonDown += new MouseButtonEventHandler((object sender, MouseButtonEventArgs e) => PropertyRighClick(path, addItemGrid, ItemName));
         }
 
@@ -214,7 +227,7 @@ namespace Oveger
             else
                 img.ImageSource = SetImage(path);
             addnewitem.Style = SetStyle(addnewitem, img);
-        }
+		}
 
         private ImageSource SetImage(string FilePath)
         {
@@ -480,5 +493,5 @@ namespace Oveger
             CreateAddButton();
             ConfigManager.LoadOrCreate(this);
         }
-    }
+	}
 }

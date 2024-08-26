@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Windows.Controls;
 using System.Windows.Forms;
 
 namespace Oveger.XAMLS
@@ -44,19 +45,27 @@ namespace Oveger.XAMLS
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
         }
-        public static void Save(bool startwithwindows, string PathToSave = null)
+        public static void Save(bool startwithwindows, string PathToSave = null, List<string> groups = null)
         {
             string json = File.ReadAllText(FileName);
             dynamic jsonobj = JsonConvert.DeserializeObject(json);
             if(PathToSave != null)
             {
                 JArray PathsSTR = new JArray();
-                foreach (string Path in jsonobj.Paths)
-                    PathsSTR.Add(Path);
-                PathsSTR.Add(PathToSave);
+				foreach (string Path in jsonobj.Paths)
+					PathsSTR.Add(Path);
+				PathsSTR.Add(PathToSave);
                 jsonobj.Paths = PathsSTR;
             }
             jsonobj.startWithWindows = startwithwindows;
+            try
+            {
+                jsonobj.Groups = groups;
+            }
+            catch
+            {
+                jsonobj.Groups = null;
+            }
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
         }
@@ -113,7 +122,12 @@ namespace Oveger.XAMLS
                     writer.WriteEndArray();
                     writer.WritePropertyName("KEY");
                     writer.WriteValue(Keys.S.ToString());
+                    
                     writer.WritePropertyName("Paths");
+                    writer.WriteStartArray();
+                    writer.WriteEndArray();
+
+                    writer.WritePropertyName("Groups");
                     writer.WriteStartArray();
                     writer.WriteEndArray();
 
@@ -139,8 +153,19 @@ namespace Oveger.XAMLS
             {
                 StreamReader r = new StreamReader(FileName);
                 string json = r.ReadToEnd();
-                dynamic data = JObject.Parse(json);
+				dynamic data = JObject.Parse(json);
+
                 dynamic Paths = data.Paths;
+
+                List<string> groups;
+                try
+                {
+                    groups = data.Groups;
+                }catch
+                {
+                    groups = null;
+                }
+                data.Groups = groups;
                 foreach (string path in Paths)
                     if (File.Exists(path))
                         mainWindow.SetConfig(path);
@@ -189,7 +214,6 @@ namespace Oveger.XAMLS
 
             if(PathsSTR.Count > 0)
             {
-                Console.WriteLine("ENTROIU!!!!!!");
                 jsonobj.Paths = PathsSTR;
                 string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
                 File.WriteAllText(FileName, output);

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using NReco.VideoConverter;
+using Oveger.Scripts;
 using Oveger.XAMLS;
 using Shell32;
 using System;
@@ -44,6 +45,7 @@ namespace Oveger
         readonly System.Windows.Forms.ToolStripMenuItem show = new System.Windows.Forms.ToolStripMenuItem { Text = "Mostrar" };
         readonly System.Windows.Forms.ToolStripMenuItem StartWithWindows = new System.Windows.Forms.ToolStripMenuItem { Text = "Iniciar com Windows" };
         readonly System.Windows.Forms.ToolStripMenuItem changehotkey = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
+		readonly System.Windows.Forms.ToolStripMenuItem groupsTray = new System.Windows.Forms.ToolStripMenuItem() {Text = "Grupos" };
 
         public MainWindow() => InitializeComponent();
 
@@ -88,7 +90,7 @@ namespace Oveger
         private void Window1_initialized(object sender, EventArgs e)
         {
             MyCommand.InputGestures.Add(new KeyGesture(Key.Escape));
-            CreateAddButton();
+            //CreateAddButton();
         }
 
         private void Window1_LocationChanged(object sender, EventArgs e)
@@ -108,12 +110,28 @@ namespace Oveger
             ConfigManager.LoadOrCreate(this);
             ConfigManager.VerifyPaths(true);
             ReloadButtons();
-			RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
+            RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
             TaskbarInitialize();
             Window1.WindowState = WindowState.Maximized;
             Hide();
             Window1.WindowState = WindowState.Normal;
-        }
+
+            ConfigGroups();
+		}
+
+        void ConfigGroups()
+        {
+			Expander customGroup = new() {IsExpanded = true, Header="BOSTA", Width = 360, Height = 150 };
+			StackPanel customStack = new();
+			Button test1 = new Button() {Content = "test1" };
+			TextBlock test2 = new TextBlock() { Text = "test2" };
+
+			customStack.Children.Add(test1);
+			customStack.Children.Add(test2);
+			customGroup.Content = customStack;
+
+			wrappanel1.Children.Add(customGroup);
+		}
 
         public async Task VerifyPaths(Action action)
         {
@@ -131,7 +149,7 @@ namespace Oveger
             close.Click += new EventHandler((object sender, EventArgs e) => Process.GetCurrentProcess().Kill());
             show.Click += new EventHandler((object sender, EventArgs e) => Show());
             StartWithWindows.Checked = ConfigManager.GetBool();
-            StartWithWindows.Click += new EventHandler((object sender, EventArgs e) =>
+			StartWithWindows.Click += new EventHandler((object sender, EventArgs e) =>
             {
                 StartWithWindows.Checked = !StartWithWindows.Checked;
                 RegKeyRegister.SetStartup(StartWithWindows.Checked);
@@ -142,13 +160,17 @@ namespace Oveger
                 Helpandshortcut helpandshortcut = new Helpandshortcut();
                 helpandshortcut.Show();
             });
+            groupsTray.Click += new EventHandler((object sender, EventArgs e) =>
+            {
+                groupsWindow GW = new groupsWindow();
+                GW.Show();
+            });
 
             context.Items.Add(show);
             context.Items.Add(StartWithWindows);
             context.Items.Add(changehotkey);
+            context.Items.Add(groupsTray);
             context.Items.Add(close);
-            //context.Container.Add(changehotkey);
-            //context.Container.Add(close);
 
             IntPtr icon = Properties.Resources.icon.GetHicon();
             notifyIcon = new System.Windows.Forms.NotifyIcon { Text = "Oveger", ContextMenuStrip = context, Icon = System.Drawing.Icon.FromHandle(icon), Visible = true };
@@ -167,7 +189,6 @@ namespace Oveger
 
                 foreach(string path in paths)
                 {
-
                     SetConfig(path);
                     ConfigManager.Save(StartWithWindows.Checked, path);
                 }

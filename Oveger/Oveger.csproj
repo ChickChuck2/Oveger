@@ -105,6 +105,9 @@
     <Compile Include="Scripts\DownloadProgress.xaml.cs">
       <DependentUpon>DownloadProgress.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Scripts\groupsWindow.xaml.cs">
+      <DependentUpon>groupsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Scripts\helpandshortcut.xaml.cs">
       <DependentUpon>helpandshortcut.xaml</DependentUpon>
     </Compile>
@@ -133,6 +136,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Scripts\DownloadProgress.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Scripts\groupsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

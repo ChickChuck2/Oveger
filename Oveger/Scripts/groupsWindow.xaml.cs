@@ -20,7 +20,8 @@ namespace Oveger.Scripts
 	/// </summary>
 	public partial class groupsWindow : Window
 	{
-
+		public bool otherMode = false;
+		public string pathToAdd = "";
 		public static RoutedCommand MyCommand = new RoutedCommand();
 		public groupsWindow()
 		{
@@ -53,17 +54,23 @@ namespace Oveger.Scripts
 			foreach (var group in groups)
 			{
 				yn = !yn;
-				Console.WriteLine($"gp: {group}");
 				Label label = new Label() { Style = new() { Setters = { new Setter { Property = BackgroundProperty, Value = (yn) ? black : white } } } };
 				label.Content = group;
-
 				label.MouseDown += new((sender, e) =>
 				{
-					var v = MessageBox.Show("Tem certeza que deseja excluir essa categoria?", "Excluir grupo?", MessageBoxButton.YesNo);
-					if (v == MessageBoxResult.Yes)
+					if (!otherMode)
 					{
-						ConfigManager.RemoveGroup(label.Content.ToString());
-						groupsMngr.Children.Remove(label);
+						var v = MessageBox.Show("Tem certeza que deseja excluir essa categoria?", "Excluir grupo?", MessageBoxButton.YesNo);
+						if (v == MessageBoxResult.Yes)
+						{
+							ConfigManager.RemoveGroup(label.Content.ToString());
+							groupsMngr.Children.Remove(label);
+						}
+					}
+					else
+					{
+						ConfigManager.AddPathOnGroup(pathToAdd, group);
+						Close();
 					}
 				});
 				groupsMngr.Children.Add(label);

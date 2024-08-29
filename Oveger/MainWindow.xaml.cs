@@ -177,7 +177,7 @@ namespace Oveger
                 StartWithWindows.Checked = !StartWithWindows.Checked;
                 RegKeyRegister.SetStartup(StartWithWindows.Checked);
                 ConfigManager.ChangeStartWithWindows();
-            });
+			});
             changehotkey.Click += new EventHandler((object sender, EventArgs e) =>
             {
                 Helpandshortcut helpandshortcut = new Helpandshortcut();
@@ -297,6 +297,16 @@ namespace Oveger
             right.DeleteinProgram.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { DeleteInProgram(path, gridToDelete); right.Close(); });
             right.openfolderpath.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { OpenFilePath(path); right.Close(); });
             right.property.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) => { OpenProperty(path); right.Close(); });
+            right.addgroup.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) =>
+            {
+                groupsWindow groupsWindow = new groupsWindow();
+                groupsWindow.otherMode = true;
+				groupsWindow.pathToAdd = path;
+                groupsWindow.labelmain.Content = "Clique em um dos grupos a direita (botão direito = excluir) | (botão direito = adicionar)";
+                groupsWindow.labelmain.FontSize = 12;
+                groupsWindow.Show();
+				//sim, vamos gozar
+			});
 
             int entry = 0;
             Point MouseP = new Point { X = VariablesClasses.Mouse.GetMousePosition().X, Y = VariablesClasses.Mouse.GetMousePosition().Y };

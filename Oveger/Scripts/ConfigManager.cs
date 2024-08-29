@@ -14,8 +14,8 @@ namespace Oveger.XAMLS
 
     internal static class ConfigManager
     {
-        private static readonly string pathFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\CyWoodsDev\Oveger\";
-        private static readonly string fileName = "config.json";
+		private static readonly string pathFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\CyWoodsDev\Oveger\";
+		private static readonly string fileName = "config.json";
         private static readonly string FileName = Path.Combine(pathFolder, fileName);
         public static MainWindow.Modifiers GetMODKey(int index)
         {
@@ -45,7 +45,7 @@ namespace Oveger.XAMLS
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
         }
-        [Obsolete("Use SavePath() instantiate")]
+        [Obsolete("Use SavePath() , ChangeStartWithWindows() instantiate")]
         public static void Save(bool startwithwindows, string PathToSave = null, List<string> groups = null)
         {
             string json = File.ReadAllText(FileName);
@@ -113,7 +113,7 @@ namespace Oveger.XAMLS
 			foreach (string group in groups)
             {
                 if (!ConfigManager.GetGroups().Contains(group))
-                    currgroups.Add(group, string.Empty);
+                    currgroups.Add(group, new JArray());
                 else
                     MessageBox.Show($"Já tem um grupo com o nome {group}. Pulado");
             }
@@ -122,6 +122,25 @@ namespace Oveger.XAMLS
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
         }
+        public static void AddPathOnGroup(string path,  string group)
+        {
+			string json = File.ReadAllText(FileName);
+			JObject jsonobj = JObject.Parse(json);
+			JObject jgroups = (JObject)jsonobj["Groups"];
+
+
+            foreach (var v in jgroups)
+            {
+                if (v.Key.Equals(group))
+                {
+					var target = (JArray)jgroups[group];
+                    target.Add(path);
+                    jsonobj["Groups"][group] = target;
+                }
+            }
+			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+			File.WriteAllText(FileName, output);
+		}
         public static string[] GetGroups()
         {
 			string json = File.ReadAllText(FileName);

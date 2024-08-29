@@ -14,7 +14,7 @@
     </Window.CommandBindings>
     <DockPanel>
         <WrapPanel Orientation="Vertical" Width="559">
-            <Label Content="ex: Jogos;Programas;Outros;Arquivos" FontWeight="Bold" FontSize="22" Foreground="#FFD0F5CD" Width="541" HorizontalAlignment="Center" Margin="15,0,0,0"/>
+            <Label x:Name="labelmain" Content="ex: Jogos;Programas;Outros;Arquivos" FontWeight="Bold" FontSize="22" Foreground="#FFD0F5CD" Width="541" HorizontalAlignment="Center" Margin="15,0,0,0"/>
             <TextBox Background="white" x:Name="groupsBlock" Height="35" Width="540" HorizontalAlignment="Center" />
             <Button x:Name="confirmButton" Content="Confirmar" Width="278" Height="66" Margin="0,100,0,0" HorizontalAlignment="Center" Click="confirmButton_Click" FontWeight="Bold">
                 <Button.Template>

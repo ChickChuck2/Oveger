@@ -108,7 +108,7 @@ namespace Oveger
             source.AddHook(WndProc);
 
             ConfigManager.LoadOrCreate(this);
-            ConfigManager.VerifyPaths(true);
+            //ConfigManager.VerifyPaths(true);
             ReloadButtons();
             RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
             TaskbarInitialize();
@@ -121,7 +121,29 @@ namespace Oveger
 
         void ConfigGroups()
         {
-			Expander customGroup = new() {IsExpanded = true, Header="BOSTA", Width = 360, Height = 150 };
+            //var groups = ConfigManager.GetGroups();
+            //expander X*3
+            //header = group name
+			Expander customGroup = new() {
+                IsExpanded = true, Header="BOSTA", Width = 360, Height = 150,
+                Style = new()
+                {
+                    Setters =
+                    {
+                        new Setter()
+                        {
+                            //Property = BackgroundProperty, Value = new LinearGradientBrush(Colors.Red, Colors.Blue, 90)
+                            //Property = BackgroundProperty, Value = Brushes.Red
+                            Property = BackgroundProperty, Value = new SolidColorBrush(new Color() { R = 31, G = 31, B = 31,A = 100, })
+                        },
+                        new Setter()
+                        {
+                            Property = ForegroundProperty , Value = Brushes.White
+                        }
+                    }
+                }
+            };
+
 			StackPanel customStack = new();
 			Button test1 = new Button() {Content = "test1" };
 			TextBlock test2 = new TextBlock() { Text = "test2" };
@@ -132,6 +154,7 @@ namespace Oveger
 
 			wrappanel1.Children.Add(customGroup);
 		}
+        [Obsolete]
 
         public async Task VerifyPaths(Action action)
         {
@@ -153,7 +176,7 @@ namespace Oveger
             {
                 StartWithWindows.Checked = !StartWithWindows.Checked;
                 RegKeyRegister.SetStartup(StartWithWindows.Checked);
-                ConfigManager.Save(StartWithWindows.Checked, null);
+                ConfigManager.ChangeStartWithWindows();
             });
             changehotkey.Click += new EventHandler((object sender, EventArgs e) =>
             {
@@ -186,11 +209,10 @@ namespace Oveger
             if (AddItem.ShowDialog() == true)
             {
                 string[] paths = AddItem.FileNames;
-
                 foreach(string path in paths)
                 {
                     SetConfig(path);
-                    ConfigManager.Save(StartWithWindows.Checked, path);
+                    ConfigManager.SavePath(path);
                 }
             }
         }

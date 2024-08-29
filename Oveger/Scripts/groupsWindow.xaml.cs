@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Oveger.XAMLS;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,9 +20,54 @@ namespace Oveger.Scripts
 	/// </summary>
 	public partial class groupsWindow : Window
 	{
+
+		public static RoutedCommand MyCommand = new RoutedCommand();
 		public groupsWindow()
 		{
 			InitializeComponent();
+		}
+		private void Window_Loaded(object sender, RoutedEventArgs e)
+		{
+			StartLabels();
+			MyCommand.InputGestures.Add(new KeyGesture(Key.Escape));
+		}
+
+		private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e) => Close();
+
+		private void confirmButton_Click(object sender, RoutedEventArgs e)
+		{
+			var groups = groupsBlock.Text.Split(';');
+			ConfigManager.AddGroups(groups);
+			groupsMngr.Children.Clear();
+			StartLabels();
+			Close();
+        }
+
+
+		void StartLabels()
+		{
+			var groups = ConfigManager.GetGroups();
+			bool yn = false;
+			var black = new SolidColorBrush(new Color() { R =31, G = 31, B = 31,A = 100, });
+			var white = new SolidColorBrush(new Color() { R =255, G = 255, B = 255,A = 100, });
+			foreach (var group in groups)
+			{
+				yn = !yn;
+				Console.WriteLine($"gp: {group}");
+				Label label = new Label() { Style = new() { Setters = { new Setter { Property = BackgroundProperty, Value = (yn) ? black : white } } } };
+				label.Content = group;
+
+				label.MouseDown += new((sender, e) =>
+				{
+					var v = MessageBox.Show("Tem certeza que deseja excluir essa categoria?", "Excluir grupo?", MessageBoxButton.YesNo);
+					if (v == MessageBoxResult.Yes)
+					{
+						ConfigManager.RemoveGroup(label.Content.ToString());
+						groupsMngr.Children.Remove(label);
+					}
+				});
+				groupsMngr.Children.Add(label);
+			}
 		}
 	}
 }

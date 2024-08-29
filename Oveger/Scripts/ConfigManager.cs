@@ -11,6 +11,7 @@ using System.Windows.Forms;
 
 namespace Oveger.XAMLS
 {
+
     internal static class ConfigManager
     {
         private static readonly string pathFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\CyWoodsDev\Oveger\";
@@ -29,7 +30,6 @@ namespace Oveger.XAMLS
             JObject jsonobj = (JObject)JsonConvert.DeserializeObject(File.ReadAllText(FileName));
             return Enum.Parse(typeof(Keys), (string)jsonobj["KEY"]);
         }
-
         public static void ChangeHotkeys(Keys key, MainWindow.Modifiers mod1, MainWindow.Modifiers mod2 = MainWindow.Modifiers.NoMod)
         {
             string json = File.ReadAllText(FileName);
@@ -45,6 +45,7 @@ namespace Oveger.XAMLS
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
         }
+        [Obsolete("Use SavePath() instantiate")]
         public static void Save(bool startwithwindows, string PathToSave = null, List<string> groups = null)
         {
             string json = File.ReadAllText(FileName);
@@ -69,7 +70,20 @@ namespace Oveger.XAMLS
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
         }
+        public static void SavePath(string pathToSave)
+        {
+			string json = File.ReadAllText(FileName);
+			JObject jsonobj = JObject.Parse(json);
 
+            JArray PathsSTR = new JArray();
+            foreach (string path in jsonobj["Paths"])
+                PathsSTR.Add(path);
+            PathsSTR.Add(pathToSave);
+            jsonobj["Paths"] = PathsSTR;
+
+			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+			File.WriteAllText(FileName, output);
+		}
         public static void ChangePath(string oldPath, string newPath)
         {
             string json = File.ReadAllText(FileName);
@@ -84,13 +98,58 @@ namespace Oveger.XAMLS
             string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
             File.WriteAllText(FileName, output);
         }
-
-        private static string GetKeyName(Enum typer, Enum key)
+        public static void AddGroups(string[] groups)
         {
-            return Enum.GetName(typer.GetType(), key);
-        }
+			string json = File.ReadAllText(FileName);
+			JObject jsonobj = JObject.Parse(json);
+			JObject jgroups = (JObject)jsonobj["Groups"];
 
-        public static void LoadOrCreate(MainWindow mainWindow)
+			JObject currgroups = new();
+
+            if (jgroups != null)
+                foreach (var group in jgroups)
+					currgroups.Add(group.Key,group.Value);
+
+			foreach (string group in groups)
+            {
+                if (!ConfigManager.GetGroups().Contains(group))
+                    currgroups.Add(group, string.Empty);
+                else
+                    MessageBox.Show($"Já tem um grupo com o nome {group}. Pulado");
+            }
+
+            jsonobj["Groups"] = currgroups;
+            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+            File.WriteAllText(FileName, output);
+        }
+        public static string[] GetGroups()
+        {
+			string json = File.ReadAllText(FileName);
+			JObject jsonobj = JObject.Parse(json);
+			JObject groups = (JObject)jsonobj["Groups"];
+            List<string> result = new List<string>();
+            foreach (var group in groups)
+				result.Add(group.Key);
+            return result.ToArray();
+		}
+        public static void RemoveGroup(string group)
+        {
+			string json = File.ReadAllText(FileName);
+			JObject jsonobj = JObject.Parse(json);
+			JObject currgroups = new JObject();
+
+            //LEMBRA DE FAZER A PORRA DE UM UPDATE PARA MOVER OS PATHS DA EXCLUSÃO PARA O PADRÃO :)
+            foreach (var jsongroup in (JObject)jsonobj["Groups"])
+                if (jsongroup.Key != group)
+                    currgroups.Add(jsongroup.Key, jsongroup.Value);
+
+			jsonobj["Groups"] = currgroups;
+			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+			File.WriteAllText(FileName, output);
+		}
+		[Obsolete]
+		private static string GetKeyName(Enum typer, Enum key) => Enum.GetName(typer.GetType(), key);
+		public static void LoadOrCreate(MainWindow mainWindow)
         {
             if (!File.Exists(FileName))
             {
@@ -172,21 +231,24 @@ namespace Oveger.XAMLS
                 r.Dispose();
             }
         }
+		public static void ChangeStartWithWindows()
+		{
+			string json = File.ReadAllText(FileName);
+			JObject jsonobj = JObject.Parse(json);
+			var currBool = (bool)jsonobj["startWithWindows"];
 
-        public static bool GetBool()
+			currBool = !(bool)JObject.Parse(File.ReadAllText(FileName))["startWithWindows"];
+			jsonobj["startWithWindows"] = currBool;
+			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+			File.WriteAllText(FileName, output);
+		}
+		public static bool GetBool() => (bool)JObject.Parse(File.ReadAllText(FileName))["startWithWindows"];
+		public static void VerifyPaths(bool warn)
         {
             string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
-
-            return (bool)jsonobj.startWithWindows;
-        }
-
-        public static void VerifyPaths(bool warn)
-        {
-            string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
+            JObject jsonobj = JObject.Parse(json);
             JArray PathsSTR = new JArray();
-            foreach(string path in jsonobj.Paths)
+			foreach (string path in jsonobj["Paths"])
             {
                 if (File.Exists(path))
                     PathsSTR.Add(path);
@@ -214,7 +276,7 @@ namespace Oveger.XAMLS
 
             if(PathsSTR.Count > 0)
             {
-                jsonobj.Paths = PathsSTR;
+                jsonobj["Paths"] = PathsSTR;
                 string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
                 File.WriteAllText(FileName, output);
             }

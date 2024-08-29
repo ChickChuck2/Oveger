@@ -22,24 +22,41 @@
         <Button Content="Button" HorizontalAlignment="Center" Margin="0,75,0,0" VerticalAlignment="Top" Height="29" Width="78" IsDefault="True" x:Name="ConfirmButton">
             <Button.Template>
                 <ControlTemplate TargetType="Button">
-                    <Border CornerRadius="10,10,10,10" BorderThickness="3,1,3,1">
-                        <ContentPresenter Margin="-1,-1,-1,-1" HorizontalAlignment="Center" VerticalAlignment="Center" Content="Confirmar">
-                        </ContentPresenter>
-                        <Border.BorderBrush>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="Black" Offset="0.2"/>
-                                <GradientStop Color="White" Offset="0.9"/>
-                            </LinearGradientBrush>
-                        </Border.BorderBrush>
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#292929" Offset="0.07"/>
-                                <GradientStop Color="#494949" Offset="0.24"/>
-                                <GradientStop Color="White" Offset="0.49"/>
-                                <GradientStop Color="#292929" Offset="0.82"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="border" CornerRadius="20" BorderThickness="0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#00B4DB" Offset="0.0"/>
+                                    <GradientStop Color="#0083B0" Offset="1.0"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" ShadowDepth="4" BlurRadius="15" Opacity="0.25"/>
+                            </Border.Effect>
+                        </Border>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" 
+                  TextElement.Foreground="White"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#0083B0" Offset="0.0"/>
+                                        <GradientStop Color="#00B4DB" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="border" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#000000" ShadowDepth="4" BlurRadius="20" Opacity="0.35"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#006A87"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Button.Template>
         </Button>

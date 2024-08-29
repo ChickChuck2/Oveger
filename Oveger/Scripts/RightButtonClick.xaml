@@ -128,6 +128,15 @@
                 </ControlTemplate>
             </Button.Template>
         </Button>
+        <Button Width="180" x:Name="addgroup">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border Style="{StaticResource borderStyle}">
+                        <ContentPresenter Style="{StaticResource contentButton}" Content="Adicionar Grupo"/>
+                    </Border>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
         <Canvas Height="1"></Canvas>
         <Button Width="180" x:Name="property">
             <Button.Template>

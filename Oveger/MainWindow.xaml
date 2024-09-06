@@ -92,7 +92,8 @@
         Height="{x:Static SystemParameters.PrimaryScreenHeight}"
         x:Name="wrappanel1"
         HorizontalAlignment="Left"
-        VerticalAlignment="Top">
-
+        VerticalAlignment="Top" Orientation="Vertical">
+        <WrapPanel x:Name="ungroupedPanel" HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal">
+        </WrapPanel>
     </WrapPanel>
 </Window>

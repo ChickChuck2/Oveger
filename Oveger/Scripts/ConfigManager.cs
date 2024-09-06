@@ -112,7 +112,7 @@ namespace Oveger.XAMLS
 
 			foreach (string group in groups)
             {
-                if (!ConfigManager.GetGroups().Contains(group))
+                if (!GetGroups().Contains(group))
                     currgroups.Add(group, new JArray());
                 else
                     MessageBox.Show($"Já tem um grupo com o nome {group}. Pulado");
@@ -151,6 +151,40 @@ namespace Oveger.XAMLS
 				result.Add(group.Key);
             return result.ToArray();
 		}
+
+        public static Dictionary<string,int> GetCountOfGroupsPaths()
+        {
+            Dictionary<string,int> result = new Dictionary<string,int>();
+			string json = File.ReadAllText(FileName);
+			JObject jsonobj = JObject.Parse(json);
+			JObject groups = (JObject)jsonobj["Groups"];
+
+            foreach(var group in groups)
+                result.Add(group.Key, group.Value.Count());
+            return result;
+		}
+        public static string GetGroupByPath(string path)
+        {
+            string result = "";
+			string json = File.ReadAllText(FileName);
+			JObject jsonobj = JObject.Parse(json);
+			JObject groups = (JObject)jsonobj["Groups"];
+
+            foreach(var item in groups)
+            {
+                foreach (JValue v in item.Value)
+                {
+                    if (v.ToString().Equals(path))
+                    {
+                        result = item.Key;
+                        break;
+                    }
+                    else
+                        result = string.Empty;
+                }
+            }
+			return result;
+		}
         public static void RemoveGroup(string group)
         {
 			string json = File.ReadAllText(FileName);
@@ -166,7 +200,23 @@ namespace Oveger.XAMLS
 			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
 			File.WriteAllText(FileName, output);
 		}
-		[Obsolete]
+
+        public static Dictionary<string, string[]> GetPathAndGroup()
+        {
+            Dictionary<string, string[]> result = new Dictionary<string, string[]>();
+            string json = File.ReadAllText(FileName);
+            JObject jsonobj = JObject.Parse(json);
+            JObject groups = (JObject)jsonobj["Groups"];
+			foreach (var group in (JObject)groups)
+            {
+                List<string> paths = new List<string>();
+                foreach (var path in group.Value)
+                    paths.Add(path.ToString());
+                result.Add(group.Key, paths.ToArray());
+            }
+            return result;
+        }
+        [Obsolete]
 		private static string GetKeyName(Enum typer, Enum key) => Enum.GetName(typer.GetType(), key);
 		public static void LoadOrCreate(MainWindow mainWindow)
         {
@@ -250,6 +300,17 @@ namespace Oveger.XAMLS
                 r.Dispose();
             }
         }
+        public static string[] GetPaths()
+        {
+            List<string> result = new List<string>();
+			string json = File.ReadAllText(FileName);
+			JObject data = JObject.Parse(json);
+			dynamic Paths = data["Paths"];
+			foreach (string path in Paths)
+				if (File.Exists(path))
+					result.Add(path);
+            return result.ToArray();
+		}
 		public static void ChangeStartWithWindows()
 		{
 			string json = File.ReadAllText(FileName);

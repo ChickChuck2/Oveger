@@ -132,7 +132,7 @@
             <Button.Template>
                 <ControlTemplate TargetType="Button">
                     <Border Style="{StaticResource borderStyle}">
-                        <ContentPresenter Style="{StaticResource contentButton}" Content="Adicionar Grupo"/>
+                        <ContentPresenter Style="{StaticResource contentButton}"/>
                     </Border>
                 </ControlTemplate>
             </Button.Template>

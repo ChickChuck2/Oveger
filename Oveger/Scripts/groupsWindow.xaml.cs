@@ -22,6 +22,7 @@ namespace Oveger.Scripts
 	{
 		public bool otherMode = false;
 		public string pathToAdd = "";
+		public MainWindow mainWindow;
 		public static RoutedCommand MyCommand = new RoutedCommand();
 		public groupsWindow()
 		{
@@ -58,18 +59,21 @@ namespace Oveger.Scripts
 				label.Content = group;
 				label.MouseDown += new((sender, e) =>
 				{
-					if (!otherMode)
+					Console.WriteLine($"othmd = {otherMode}");
+					if (otherMode)
 					{
 						var v = MessageBox.Show("Tem certeza que deseja excluir essa categoria?", "Excluir grupo?", MessageBoxButton.YesNo);
 						if (v == MessageBoxResult.Yes)
 						{
 							ConfigManager.RemoveGroup(label.Content.ToString());
 							groupsMngr.Children.Remove(label);
+							mainWindow.Reload();
 						}
 					}
 					else
 					{
 						ConfigManager.AddPathOnGroup(pathToAdd, group);
+						mainWindow.Reload();
 						Close();
 					}
 				});

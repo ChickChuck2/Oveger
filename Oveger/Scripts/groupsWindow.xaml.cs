@@ -30,6 +30,8 @@ namespace Oveger.Scripts
 		}
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
+			Topmost = true;
+			Focus();
 			StartLabels();
 			MyCommand.InputGestures.Add(new KeyGesture(Key.Escape));
 		}

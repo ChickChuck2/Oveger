@@ -301,7 +301,6 @@ namespace Oveger
 			ConfigManager.LoadOrCreate(this);
 		}
 
-
 		private void PropertyRighClick(string path, Grid gridToDelete, TextBlock textblock, string oldPath = null)
 		{
 			RightButtonClick right = new RightButtonClick();

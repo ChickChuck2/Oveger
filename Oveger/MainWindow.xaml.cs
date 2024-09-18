@@ -44,7 +44,7 @@ namespace Oveger
 		readonly System.Windows.Forms.ToolStripMenuItem show = new System.Windows.Forms.ToolStripMenuItem { Text = "Mostrar" };
 		readonly System.Windows.Forms.ToolStripMenuItem StartWithWindows = new System.Windows.Forms.ToolStripMenuItem { Text = "Iniciar com Windows" };
 		readonly System.Windows.Forms.ToolStripMenuItem changehotkey = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
-		readonly System.Windows.Forms.ToolStripMenuItem groupsTray = new System.Windows.Forms.ToolStripMenuItem() {Text = "Grupos" };
+		readonly System.Windows.Forms.ToolStripMenuItem groupsTray = new System.Windows.Forms.ToolStripMenuItem() {Text = "Gerenciar Grupos" };
 
 		public MainWindow() => InitializeComponent();
 
@@ -255,11 +255,9 @@ namespace Oveger
 		{
 			if (ConfigManager.GetGroupByPath(path) != string.Empty)
 			{
-				Console.WriteLine($"CONSW {path}");
 				StackPanel customStack = (StackPanel)this.FindName(ConfigManager.GetGroupByPath(path)+"stack");
 				if (customStack == null)
 				{
-					Console.WriteLine("cirando porra");
 					customStack = new StackPanel();
 					customStack.Orientation = Orientation.Horizontal;
 					this.RegisterName(ConfigManager.GetGroupByPath(path) + "stack", customStack);
@@ -307,7 +305,6 @@ namespace Oveger
 		private void PropertyRighClick(string path, Grid gridToDelete, TextBlock textblock, string oldPath = null)
 		{
 			RightButtonClick right = new RightButtonClick();
-			
 			oldPath = path;
 
 			Closing += new CancelEventHandler((object sender, CancelEventArgs e) => right.Close());
@@ -326,19 +323,21 @@ namespace Oveger
 
 			right.addgroup.Click += new RoutedEventHandler((object sender, RoutedEventArgs e) =>
 			{
-				groupsWindow groupsWindow = new groupsWindow();
 				if (!ConfigManager.GetGroupByPath(path).Equals(string.Empty))
 				{
-					groupsWindow.otherMode = true;
-					groupsWindow.labelmain.Content = "Clique em um grupo para Remover";
+					ConfigManager.RemovePathOnGroup(path, ConfigManager.GetGroupByPath(path));
+					Reload();
+					right.Close();
 				}
 				else
+				{
+					groupsWindow groupsWindow = new groupsWindow();
+					groupsWindow.mainWindow = this;
+					groupsWindow.pathToAdd = path;
+					groupsWindow.labelmain.FontSize = 12;
 					groupsWindow.labelmain.Content = "Clique em um grupo para Adicionar";
-				groupsWindow.mainWindow = this;
-				groupsWindow.pathToAdd = path;
-				groupsWindow.labelmain.FontSize = 12;
-				groupsWindow.Show();
-				//sim, vamos gozar
+					groupsWindow.Show();
+				}
 			});
 
 			int entry = 0;
@@ -546,7 +545,6 @@ namespace Oveger
 
 		public System.Drawing.Icon ExtractIconfromFile(string path)
 		{
-			Console.WriteLine($"EXTRACTING FROM {path}");
 			System.Drawing.Icon result = System.Drawing.Icon.ExtractAssociatedIcon(path);
 			return result;
 		}

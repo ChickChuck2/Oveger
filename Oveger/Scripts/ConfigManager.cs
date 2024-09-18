@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -141,7 +142,38 @@ namespace Oveger.XAMLS
 			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
 			File.WriteAllText(FileName, output);
 		}
-        public static string[] GetGroups()
+
+        public static void RemovePathOnGroup(string path, string group)
+        {
+            //path = path.Replace(@"\", @"\\");
+            string json = File.ReadAllText(FileName);
+            JObject jsonobj = JObject.Parse(json);
+            JObject jgroups = (JObject)jsonobj["Groups"];
+
+            JArray newPaths = new();
+
+
+            Console.WriteLine($"REMOVENDO {path}");
+            foreach(var v in jgroups)
+                if(v.Key.Equals(group))
+                {
+                    //Console.WriteLine(v.ToString());
+                    var c = (JArray)v.Value;
+                    foreach (var v2 in c)
+                    {
+                        if((string)v2 != path)
+                        newPaths.Add(v2);
+                        Console.WriteLine(v2);
+                    }
+                    Console.WriteLine(newPaths.ToString());
+                    break;
+                }
+            jsonobj["Groups"][group] = newPaths;
+            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
+            File.WriteAllText(FileName, output);
+        }
+
+		public static string[] GetGroups()
         {
 			string json = File.ReadAllText(FileName);
 			JObject jsonobj = JObject.Parse(json);

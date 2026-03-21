@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -288,8 +288,8 @@ namespace Oveger.XAMLS
                     writer.WriteEndArray();
 
                     writer.WritePropertyName("Groups");
-                    writer.WriteStartArray();
-                    writer.WriteEndArray();
+                    writer.WriteStartObject();
+                    writer.WriteEndObject();
 
                     writer.WritePropertyName("labelsname");
                     writer.WriteStartArray();
@@ -315,17 +315,25 @@ namespace Oveger.XAMLS
                 string json = r.ReadToEnd();
 				dynamic data = JObject.Parse(json);
 
-                dynamic Paths = data.Paths;
+                if (data["Groups"] is JArray)
+                {
+                    data["Groups"] = new JObject();
+                    r.Close();
+                    File.WriteAllText(FileName, JsonConvert.SerializeObject(data, Formatting.Indented));
+                    r = new StreamReader(FileName);
+                }
+
+                dynamic Paths = data["Paths"];
 
                 List<string> groups;
                 try
                 {
-                    groups = data.Groups;
+                    groups = data["Groups"]?.ToObject<List<string>>();
                 }catch
                 {
                     groups = null;
                 }
-                data.Groups = groups;
+                data["Groups"] = groups != null ? JArray.FromObject(groups) : data["Groups"]; // This part is actually confusing in the original code, but I'll keep it safe.
                 foreach (string path in Paths)
                     if (File.Exists(path))
                         mainWindow.SetConfig(path);

@@ -30,6 +30,7 @@ namespace Oveger.Scripts
 		}
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
+			mainWindow.Hide();
 			Topmost = true;
 			Focus();
 			StartLabels();
@@ -68,17 +69,20 @@ namespace Oveger.Scripts
 						{
 							ConfigManager.RemoveGroup(label.Content.ToString());
 							groupsMngr.Children.Remove(label);
+							mainWindow.Show();
 							mainWindow.Reload();
 						}
 					}
 					else if(!pathToAdd.Equals("") &&  !removeMode)
 					{
 						ConfigManager.AddPathOnGroup(pathToAdd, group);
+						mainWindow.Show();
 						mainWindow.Reload();
 						Close();
 					}else
 					{
 						ConfigManager.RemovePathOnGroup(pathToAdd, group);
+						mainWindow.Show();
 						mainWindow?.Reload();
 						Close();
 					}

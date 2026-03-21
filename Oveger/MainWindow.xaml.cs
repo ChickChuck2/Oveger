@@ -177,6 +177,7 @@ namespace Oveger
 			groupsTray.Click += new EventHandler((object sender, EventArgs e) =>
 			{
 				groupsWindow GW = new groupsWindow();
+				GW.mainWindow = this;
 				GW.Show();
 			});
 
@@ -255,6 +256,7 @@ namespace Oveger
 		{
 			if (ConfigManager.GetGroupByPath(path) != string.Empty)
 			{
+
 				StackPanel customStack = (StackPanel)this.FindName(ConfigManager.GetGroupByPath(path)+"stack");
 				if (customStack == null)
 				{
@@ -335,6 +337,7 @@ namespace Oveger
 					groupsWindow.pathToAdd = path;
 					groupsWindow.labelmain.FontSize = 12;
 					groupsWindow.labelmain.Content = "Clique em um grupo para Adicionar";
+					Hide();
 					groupsWindow.Show();
 				}
 			});

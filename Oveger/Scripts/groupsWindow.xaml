@@ -1,65 +1,137 @@
-﻿<Window x:Class="Oveger.Scripts.groupsWindow"
+<Window x:Class="Oveger.Scripts.groupsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Oveger.Scripts"
-        mc:Ignorable="d" Height="337" Width="846" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" WindowStartupLocation="CenterScreen" WindowStyle="None" Loaded="Window_Loaded">
-    <Window.Background>
-        <SolidColorBrush Color="#292929"/>
-    </Window.Background>
+        mc:Ignorable="d"
+        Height="420" Width="700"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Loaded="Window_Loaded">
+
     <Window.CommandBindings>
-        <CommandBinding Command="{x:Static local:groupsWindow.MyCommand}" 
-                 Executed="MyCommandExecuted"/>
+        <CommandBinding Command="{x:Static local:groupsWindow.MyCommand}"
+                        Executed="MyCommandExecuted"/>
     </Window.CommandBindings>
-    <DockPanel>
-        <WrapPanel Orientation="Vertical" Width="559">
-            <Label x:Name="labelmain" Content="ex: Jogos;Programas;Outros;Arquivos" FontWeight="Bold" FontSize="22" Foreground="#FFD0F5CD" Width="541" HorizontalAlignment="Center" Margin="15,0,0,0"/>
-            <TextBox Background="white" x:Name="groupsBlock" Height="35" Width="540" HorizontalAlignment="Center" />
-            <Button x:Name="confirmButton" Content="Confirmar" Width="278" Height="66" Margin="0,100,0,0" HorizontalAlignment="Center" Click="confirmButton_Click" FontWeight="Bold">
+
+    <Border CornerRadius="20" Padding="28" SnapsToDevicePixels="True">
+        <Border.Background>
+            <SolidColorBrush Color="#0F0D1F" Opacity="0.97"/>
+        </Border.Background>
+        <Border.BorderBrush>
+            <SolidColorBrush Color="#FFFFFF" Opacity="0.09"/>
+        </Border.BorderBrush>
+        <Border.BorderThickness>1</Border.BorderThickness>
+        <Border.Effect>
+            <DropShadowEffect Color="#7C3AED" BlurRadius="40" ShadowDepth="0" Opacity="0.22"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <Border Width="36" Height="36" CornerRadius="10" Margin="0,0,12,0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#7C3AED" Offset="0"/>
+                            <GradientStop Color="#4F46E5" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <TextBlock Text="🏷" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <Label x:Name="labelmain"
+                       Content="Gerenciar Grupos"
+                       FontSize="18" FontWeight="SemiBold"
+                       Foreground="White"
+                       VerticalAlignment="Center"
+                       Padding="0"/>
+            </StackPanel>
+
+            <!-- Input row -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="groupsBlock"
+                         Grid.Column="0"
+                         Style="{StaticResource DarkInput}"
+                         Height="40"
+                         VerticalContentAlignment="Center"
+                         ToolTip="ex: Jogos;Programas;Outros"/>
+                <Button x:Name="confirmButton"
+                        Grid.Column="2"
+                        Content="Criar Grupos"
+                        Style="{StaticResource AccentButton}"
+                        Height="40"
+                        Padding="20,0"
+                        Click="confirmButton_Click"/>
+            </Grid>
+
+            <!-- Groups list -->
+            <Border Grid.Row="4" CornerRadius="12"
+                    Padding="8" BorderThickness="1">
+                <Border.Background>
+                    <SolidColorBrush Color="#1A1730" Opacity="0.5"/>
+                </Border.Background>
+                <Border.BorderBrush>
+                    <SolidColorBrush Color="#FFFFFF" Opacity="0.06"/>
+                </Border.BorderBrush>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Style="{StaticResource SlimScrollViewer}">
+                    <WrapPanel x:Name="groupsMngr" Orientation="Horizontal"/>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Close -->
+            <Button Grid.Row="6"
+                    HorizontalAlignment="Right"
+                    Content="Fechar"
+                    Height="38"
+                    Padding="24,0"
+                    Foreground="#94A3B8"
+                    FontFamily="Segoe UI Variable, Segoe UI"
+                    FontSize="13"
+                    Cursor="Hand"
+                    Click="CloseButton_Click">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
-                        <Grid>
-                            <Border x:Name="border" CornerRadius="20" BorderThickness="0">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#00B4DB" Offset="0.0"/>
-                                        <GradientStop Color="#0083B0" Offset="1.0"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                                <Border.Effect>
-                                    <DropShadowEffect Color="#000000" ShadowDepth="4" BlurRadius="15" Opacity="0.25"/>
-                                </Border.Effect>
-                            </Border>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" 
-                              TextElement.Foreground="White"/>
-                        </Grid>
+                        <Border x:Name="Root" CornerRadius="10" Padding="24,8"
+                                BorderThickness="1">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="#FFFFFF" Opacity="0.12"/>
+                            </Border.BorderBrush>
+                            <Border.Background>
+                                <SolidColorBrush Color="#1A1730" Opacity="0.6"/>
+                            </Border.Background>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="#94A3B8"/>
+                        </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background">
-                                    <Setter.Value>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="#0083B0" Offset="0.0"/>
-                                            <GradientStop Color="#00B4DB" Offset="1.0"/>
-                                        </LinearGradientBrush>
-                                    </Setter.Value>
-                                </Setter>
-                                <Setter TargetName="border" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#000000" ShadowDepth="4" BlurRadius="20" Opacity="0.35"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#006A87"/>
+                                <Setter TargetName="Root" Property="Opacity" Value="0.7"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Button.Template>
             </Button>
-        </WrapPanel>
-        <ScrollViewer>
-            <StackPanel x:Name="groupsMngr"/>
-        </ScrollViewer>
-    </DockPanel>
+        </Grid>
+    </Border>
 </Window>

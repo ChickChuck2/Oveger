@@ -5,207 +5,399 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows.Controls;
 using System.Windows.Forms;
 
 namespace Oveger.XAMLS
 {
-
     internal static class ConfigManager
     {
-		private static readonly string pathFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\CyWoodsDev\Oveger\";
-		private static readonly string fileName = "config.json";
-        private static readonly string FileName = Path.Combine(pathFolder, fileName);
+        private static readonly string pathFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\CyWoodsDev\Oveger\";
+        private static readonly string fileName    = "config.json";
+        private static readonly string FileName   = Path.Combine(pathFolder, fileName);
+
+        // ════════════════════════════════════════════════════════
+        //  RESILIENCE LAYER
+        // ════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Último motivo de falha registrado (para diagnóstico).
+        /// </summary>
+        public static string LastError { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Tenta ler e fazer parse do config.json.
+        /// Retorna null se o arquivo não existir, estiver vazio ou corrompido.
+        /// </summary>
+        private static JObject SafeRead()
+        {
+            try
+            {
+                if (!File.Exists(FileName))
+                    return null;
+
+                string json = File.ReadAllText(FileName, Encoding.UTF8);
+
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    LastError = "Arquivo de configuração está vazio.";
+                    return null;
+                }
+
+                JObject obj = JObject.Parse(json);
+                return obj;
+            }
+            catch (JsonReaderException ex)
+            {
+                LastError = $"JSON inválido/corrompido: {ex.Message}";
+                return null;
+            }
+            catch (IOException ex)
+            {
+                LastError = $"Erro de acesso ao arquivo: {ex.Message}";
+                return null;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                LastError = $"Sem permissão de leitura: {ex.Message}";
+                return null;
+            }
+            catch (Exception ex)
+            {
+                LastError = $"Erro inesperado: {ex.Message}";
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Move o arquivo corrompido para um backup com timestamp e cria um novo config padrão.
+        /// </summary>
+        private static void BackupCorruptedAndReset()
+        {
+            if (File.Exists(FileName))
+            {
+                string timestamp  = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string backupPath = Path.Combine(pathFolder, $"config.corrupted_{timestamp}.json");
+                try
+                {
+                    File.Move(FileName, backupPath);
+                    MessageBox.Show(
+                        $"O arquivo de configuração estava corrompido ou ilegível.\n\n" +
+                        $"Motivo: {LastError}\n\n" +
+                        $"Um backup foi salvo em:\n{backupPath}\n\n" +
+                        $"O Oveger criará um novo arquivo de configuração.",
+                        "Oveger — Configuração corrompida",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+                catch
+                {
+                    // Se não conseguir mover, tenta deletar para poder recriar
+                    try { File.Delete(FileName); } catch { /* melhor esforço */ }
+                }
+            }
+
+            WriteDefaultConfig();
+        }
+
+        /// <summary>
+        /// Garante que o arquivo de configuração existe e é válido.
+        /// Se não existir → cria. Se corrompido/vazio → faz backup e recria.
+        /// Se campos obrigatórios faltam → os adiciona com valores padrão.
+        /// </summary>
+        private static void EnsureValidConfig()
+        {
+            if (!Directory.Exists(pathFolder))
+            {
+                try { Directory.CreateDirectory(pathFolder); }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        $"Não foi possível criar a pasta de configuração:\n{pathFolder}\n\nErro: {ex.Message}",
+                        "Oveger — Falha crítica",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Process.GetCurrentProcess().Kill();
+                }
+            }
+
+            // Arquivo não existe → criar do zero
+            if (!File.Exists(FileName))
+            {
+                WriteDefaultConfig();
+                return;
+            }
+
+            // Tenta ler → se falhar → backup + recriar
+            JObject obj = SafeRead();
+            if (obj == null)
+            {
+                BackupCorruptedAndReset();
+                return;
+            }
+
+            // Arquivo existe e parseou, mas pode ter campos faltando (versão antiga)
+            bool dirty = false;
+
+            if (obj["startWithWindows"] == null)  { obj["startWithWindows"] = false; dirty = true; }
+            if (obj["modkeys"] == null)
+            {
+                obj["modkeys"] = new JArray
+                {
+                    MainWindow.Modifiers.Ctrl.ToString(),
+                    MainWindow.Modifiers.Alt.ToString()
+                };
+                dirty = true;
+            }
+            if (obj["KEY"] == null)               { obj["KEY"] = Keys.S.ToString(); dirty = true; }
+            if (obj["Paths"] == null)             { obj["Paths"] = new JArray(); dirty = true; }
+            if (obj["Groups"] == null || obj["Groups"] is JArray)
+            {
+                obj["Groups"] = new JObject();
+                dirty = true;
+            }
+            if (obj["labelsname"] == null)
+            {
+                obj["labelsname"] = new JArray { new JObject() };
+                dirty = true;
+            }
+
+            if (dirty)
+            {
+                try { File.WriteAllText(FileName, obj.ToString(Formatting.Indented), Encoding.UTF8); }
+                catch { /* não crítico — carrega o que tem */ }
+            }
+        }
+
+        /// <summary>
+        /// Escreve um config.json padrão do zero.
+        /// </summary>
+        private static void WriteDefaultConfig()
+        {
+            var defaultObj = new JObject
+            {
+                ["startWithWindows"] = false,
+                ["modkeys"] = new JArray
+                {
+                    MainWindow.Modifiers.Ctrl.ToString(),
+                    MainWindow.Modifiers.Alt.ToString()
+                },
+                ["KEY"]        = Keys.S.ToString(),
+                ["Paths"]      = new JArray(),
+                ["Groups"]     = new JObject(),
+                ["labelsname"] = new JArray { new JObject() }
+            };
+
+            try
+            {
+                File.WriteAllText(FileName, defaultObj.ToString(Formatting.Indented), Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Não foi possível criar o arquivo de configuração:\n{FileName}\n\nErro: {ex.Message}",
+                    "Oveger — Falha crítica",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Process.GetCurrentProcess().Kill();
+            }
+        }
+
+        /// <summary>
+        /// Tenta gravar JSON no arquivo de config com proteção contra falha de escrita.
+        /// </summary>
+        private static bool SafeWrite(JObject obj)
+        {
+            try
+            {
+                File.WriteAllText(FileName, obj.ToString(Formatting.Indented), Encoding.UTF8);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LastError = $"Falha ao salvar configuração: {ex.Message}";
+                MessageBox.Show(
+                    $"Não foi possível salvar a configuração.\n\nErro: {ex.Message}",
+                    "Oveger — Erro ao salvar",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  PUBLIC API
+        // ════════════════════════════════════════════════════════
+
         public static MainWindow.Modifiers GetMODKey(int index)
         {
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
             List<MainWindow.Modifiers> MODKey = new List<MainWindow.Modifiers>();
-            JObject jsonobj = JsonConvert.DeserializeObject(File.ReadAllText(FileName)) as JObject;
             foreach (JToken key in jsonobj["modkeys"])
                 MODKey.Add((MainWindow.Modifiers)Enum.Parse(typeof(MainWindow.Modifiers), key.ToString()));
             return MODKey[index];
         }
+
         public static object GetKey()
         {
-            JObject jsonobj = (JObject)JsonConvert.DeserializeObject(File.ReadAllText(FileName));
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
             return Enum.Parse(typeof(Keys), (string)jsonobj["KEY"]);
         }
+
         public static void ChangeHotkeys(Keys key, MainWindow.Modifiers mod1, MainWindow.Modifiers mod2 = MainWindow.Modifiers.NoMod)
         {
-            string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
-            JArray modkeys = new JArray
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+
+            jsonobj["modkeys"] = new JArray
             {
                 Enum.GetName(typeof(MainWindow.Modifiers), mod1),
-                Enum.GetName(typeof(MainWindow.Modifiers), mod2),
+                Enum.GetName(typeof(MainWindow.Modifiers), mod2)
             };
+            jsonobj["KEY"] = Enum.GetName(typeof(Keys), key);
 
-            jsonobj.modkeys = modkeys;
-            jsonobj.KEY = Enum.GetName(typeof(Keys), key);
-            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-            File.WriteAllText(FileName, output);
+            SafeWrite(jsonobj);
         }
-        [Obsolete("Use SavePath() , ChangeStartWithWindows() instantiate")]
+
+        [Obsolete("Use SavePath() , ChangeStartWithWindows() instead")]
         public static void Save(bool startwithwindows, string PathToSave = null, List<string> groups = null)
         {
-            string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
-            if(PathToSave != null)
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+
+            if (PathToSave != null)
             {
                 JArray PathsSTR = new JArray();
-				foreach (string Path in jsonobj.Paths)
-					PathsSTR.Add(Path);
-				PathsSTR.Add(PathToSave);
-                jsonobj.Paths = PathsSTR;
+                foreach (string p in jsonobj["Paths"])
+                    PathsSTR.Add(p);
+                PathsSTR.Add(PathToSave);
+                jsonobj["Paths"] = PathsSTR;
             }
-            jsonobj.startWithWindows = startwithwindows;
-            try
-            {
-                jsonobj.Groups = groups;
-            }
-            catch
-            {
-                jsonobj.Groups = null;
-            }
-            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-            File.WriteAllText(FileName, output);
+            jsonobj["startWithWindows"] = startwithwindows;
+            try   { jsonobj["Groups"] = groups != null ? JArray.FromObject(groups) : jsonobj["Groups"]; }
+            catch { jsonobj["Groups"] = null; }
+
+            SafeWrite(jsonobj);
         }
+
         public static void SavePath(string pathToSave)
         {
-			string json = File.ReadAllText(FileName);
-			JObject jsonobj = JObject.Parse(json);
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
 
             JArray PathsSTR = new JArray();
-            foreach (string path in jsonobj["Paths"])
-                PathsSTR.Add(path);
+            foreach (string p in jsonobj["Paths"])
+                PathsSTR.Add(p);
             PathsSTR.Add(pathToSave);
             jsonobj["Paths"] = PathsSTR;
 
-			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-			File.WriteAllText(FileName, output);
-		}
+            SafeWrite(jsonobj);
+        }
+
         public static void ChangePath(string oldPath, string newPath)
         {
-            string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+
             JArray PathsSTR = new JArray();
-            foreach (string path in jsonobj.Paths)
-                if (oldPath == path)
-                    PathsSTR.Add(newPath);
-                else
-                    PathsSTR.Add(path);
-            jsonobj.Paths = PathsSTR;
-            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-            File.WriteAllText(FileName, output);
+            foreach (string p in jsonobj["Paths"])
+                PathsSTR.Add(oldPath == p ? newPath : p);
+            jsonobj["Paths"] = PathsSTR;
+
+            SafeWrite(jsonobj);
         }
+
         public static void AddGroups(string[] groups)
         {
-			string json = File.ReadAllText(FileName);
-			JObject jsonobj = JObject.Parse(json);
-			JObject jgroups = (JObject)jsonobj["Groups"];
+            EnsureValidConfig();
+            JObject jsonobj  = SafeRead();
+            JObject jgroups  = (JObject)jsonobj["Groups"] ?? new JObject();
+            JObject curr     = new JObject();
 
-			JObject currgroups = new();
+            foreach (var g in jgroups)
+                curr.Add(g.Key, g.Value);
 
-            if (jgroups != null)
-                foreach (var group in jgroups)
-					currgroups.Add(group.Key,group.Value);
-
-			foreach (string group in groups)
+            foreach (string g in groups)
             {
-                if (!GetGroups().Contains(group))
-                    currgroups.Add(group, new JArray());
+                if (!GetGroups().Contains(g))
+                    curr.Add(g, new JArray());
                 else
-                    MessageBox.Show($"Já tem um grupo com o nome {group}. Pulado");
+                    MessageBox.Show($"Já existe um grupo chamado '{g}'. Pulado.", "Oveger", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
-            jsonobj["Groups"] = currgroups;
-            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-            File.WriteAllText(FileName, output);
+            jsonobj["Groups"] = curr;
+            SafeWrite(jsonobj);
         }
-        public static void AddPathOnGroup(string path,  string group)
-        {
-			string json = File.ReadAllText(FileName);
-			JObject jsonobj = JObject.Parse(json);
-			JObject jgroups = (JObject)jsonobj["Groups"];
 
+        public static void AddPathOnGroup(string path, string group)
+        {
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+            JObject jgroups = (JObject)jsonobj["Groups"];
 
             foreach (var v in jgroups)
             {
                 if (v.Key.Equals(group))
                 {
-					var target = (JArray)jgroups[group];
+                    var target = (JArray)jgroups[group];
                     target.Add(path);
                     jsonobj["Groups"][group] = target;
                 }
             }
-			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-			File.WriteAllText(FileName, output);
-		}
+            SafeWrite(jsonobj);
+        }
 
         public static void RemovePathOnGroup(string path, string group)
         {
-            //path = path.Replace(@"\", @"\\");
-            string json = File.ReadAllText(FileName);
-            JObject jsonobj = JObject.Parse(json);
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
             JObject jgroups = (JObject)jsonobj["Groups"];
+            JArray newPaths = new JArray();
 
-            JArray newPaths = new();
-
-
-            Console.WriteLine($"REMOVENDO {path}");
-            foreach(var v in jgroups)
-                if(v.Key.Equals(group))
+            foreach (var v in jgroups)
+                if (v.Key.Equals(group))
                 {
-                    //Console.WriteLine(v.ToString());
-                    var c = (JArray)v.Value;
-                    foreach (var v2 in c)
-                    {
-                        if((string)v2 != path)
-                        newPaths.Add(v2);
-                        Console.WriteLine(v2);
-                    }
-                    Console.WriteLine(newPaths.ToString());
+                    foreach (var v2 in (JArray)v.Value)
+                        if ((string)v2 != path)
+                            newPaths.Add(v2);
                     break;
                 }
+
             jsonobj["Groups"][group] = newPaths;
-            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-            File.WriteAllText(FileName, output);
+            SafeWrite(jsonobj);
         }
 
-		public static string[] GetGroups()
+        public static string[] GetGroups()
         {
-			string json = File.ReadAllText(FileName);
-			JObject jsonobj = JObject.Parse(json);
-			JObject groups = (JObject)jsonobj["Groups"];
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+            JObject groups  = (JObject)jsonobj["Groups"];
             List<string> result = new List<string>();
-            foreach (var group in groups)
-				result.Add(group.Key);
+            foreach (var g in groups)
+                result.Add(g.Key);
             return result.ToArray();
-		}
+        }
 
-        public static Dictionary<string,int> GetCountOfGroupsPaths()
+        public static Dictionary<string, int> GetCountOfGroupsPaths()
         {
-            Dictionary<string,int> result = new Dictionary<string,int>();
-			string json = File.ReadAllText(FileName);
-			JObject jsonobj = JObject.Parse(json);
-			JObject groups = (JObject)jsonobj["Groups"];
-
-            foreach(var group in groups)
-                result.Add(group.Key, group.Value.Count());
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+            JObject groups  = (JObject)jsonobj["Groups"];
+            var result = new Dictionary<string, int>();
+            foreach (var g in groups)
+                result.Add(g.Key, g.Value.Count());
             return result;
-		}
+        }
+
         public static string GetGroupByPath(string path)
         {
-            string result = "";
-			string json = File.ReadAllText(FileName);
-			JObject jsonobj = JObject.Parse(json);
-			JObject groups = (JObject)jsonobj["Groups"];
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+            JObject groups  = (JObject)jsonobj["Groups"];
+            string result   = string.Empty;
 
-            foreach(var item in groups)
-            {
+            foreach (var item in groups)
                 foreach (JValue v in item.Value)
-                {
                     if (v.ToString().Equals(path))
                     {
                         result = item.Key;
@@ -213,251 +405,221 @@ namespace Oveger.XAMLS
                     }
                     else
                         result = string.Empty;
-                }
-            }
-			return result;
-		}
+
+            return result;
+        }
+
         public static void RemoveGroup(string group)
         {
-			string json = File.ReadAllText(FileName);
-			JObject jsonobj = JObject.Parse(json);
-			JObject currgroups = new JObject();
+            EnsureValidConfig();
+            JObject jsonobj  = SafeRead();
+            JObject curr = new JObject();
 
-            //LEMBRA DE FAZER A PORRA DE UM UPDATE PARA MOVER OS PATHS DA EXCLUSÃO PARA O PADRÃO :)
-            foreach (var jsongroup in (JObject)jsonobj["Groups"])
-                if (jsongroup.Key != group)
-                    currgroups.Add(jsongroup.Key, jsongroup.Value);
+            foreach (var g in (JObject)jsonobj["Groups"])
+                if (g.Key != group)
+                    curr.Add(g.Key, g.Value);
 
-			jsonobj["Groups"] = currgroups;
-			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-			File.WriteAllText(FileName, output);
-		}
+            jsonobj["Groups"] = curr;
+            SafeWrite(jsonobj);
+        }
 
         public static Dictionary<string, string[]> GetPathAndGroup()
         {
-            Dictionary<string, string[]> result = new Dictionary<string, string[]>();
-            string json = File.ReadAllText(FileName);
-            JObject jsonobj = JObject.Parse(json);
-            JObject groups = (JObject)jsonobj["Groups"];
-			foreach (var group in (JObject)groups)
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+            JObject groups  = (JObject)jsonobj["Groups"];
+            var result = new Dictionary<string, string[]>();
+
+            foreach (var g in groups)
             {
                 List<string> paths = new List<string>();
-                foreach (var path in group.Value)
-                    paths.Add(path.ToString());
-                result.Add(group.Key, paths.ToArray());
+                foreach (var p in g.Value)
+                    paths.Add(p.ToString());
+                result.Add(g.Key, paths.ToArray());
             }
             return result;
         }
+
         [Obsolete]
-		private static string GetKeyName(Enum typer, Enum key) => Enum.GetName(typer.GetType(), key);
-		public static void LoadOrCreate(MainWindow mainWindow)
+        private static string GetKeyName(Enum typer, Enum key) => Enum.GetName(typer.GetType(), key);
+
+        public static void LoadOrCreate(MainWindow mainWindow)
         {
-            if (!File.Exists(FileName))
+            EnsureValidConfig();
+
+            JObject data;
+            try
             {
-                if (!Directory.Exists(pathFolder))
-                    try
-                    {
-                        Directory.CreateDirectory(pathFolder);
-                    }catch(FileNotFoundException ex)
-                    {
-                        DialogResult d = MessageBox.Show($"Seu Windows Defender bloqueou o acesso a OneDrive' Precisamos que você dê acesso a essa pasta para que possamos" +
-                            $" dar inicio a criação da pasta {pathFolder}", $"Oveger - Acesso bloqueado {ex.Message}", MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1);
-                        Process.GetCurrentProcess().Kill();
-                        Application.Exit();
-                    }
-                File.Create(FileName).Dispose();
-                StringBuilder sb = new StringBuilder();
-                StringWriter sw = new StringWriter(sb);
-
-                using (JsonWriter writer = new JsonTextWriter(sw))
+                data = SafeRead();
+                if (data == null)
                 {
-                    writer.Formatting = Formatting.Indented;
-                    writer.WriteStartObject();
-                    writer.WritePropertyName("startWithWindows");
-                    writer.WriteValue(false);
-                    writer.WritePropertyName("modkeys");
-                    writer.WriteStartArray();
-                    writer.WriteValue(MainWindow.Modifiers.Ctrl.ToString());
-                    writer.WriteValue(MainWindow.Modifiers.Alt.ToString());
-                    writer.WriteEndArray();
-                    writer.WritePropertyName("KEY");
-                    writer.WriteValue(Keys.S.ToString());
-                    
-                    writer.WritePropertyName("Paths");
-                    writer.WriteStartArray();
-                    writer.WriteEndArray();
-
-                    writer.WritePropertyName("Groups");
-                    writer.WriteStartObject();
-                    writer.WriteEndObject();
-
-                    writer.WritePropertyName("labelsname");
-                    writer.WriteStartArray();
-                    writer.WriteStartObject();
-
-                    writer.WriteEndObject();
-                    writer.WriteEnd();
-
-                    writer.WriteEndObject();
-
-                    using (StreamWriter file = File.CreateText(FileName))
-                    {
-                        JObject JOBe = JObject.Parse(sb.ToString());
-                        JsonSerializer serializer = new JsonSerializer { Formatting = Formatting.Indented };
-                        serializer.Serialize(file, JOBe);
-                        file.Dispose();
-                    }
+                    // EnsureValidConfig deveria ter resolvido, mas tenta novamente
+                    WriteDefaultConfig();
+                    data = SafeRead();
+                    if (data == null) return; // desiste se ainda falhar
                 }
             }
-            else
+            catch (Exception ex)
             {
-                StreamReader r = new StreamReader(FileName);
-                string json = r.ReadToEnd();
-				dynamic data = JObject.Parse(json);
+                MessageBox.Show(
+                    $"Erro inesperado ao carregar configuração:\n{ex.Message}",
+                    "Oveger", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
-                if (data["Groups"] is JArray)
-                {
-                    data["Groups"] = new JObject();
-                    r.Close();
-                    File.WriteAllText(FileName, JsonConvert.SerializeObject(data, Formatting.Indented));
-                    r = new StreamReader(FileName);
-                }
+            // Corrige legado: "Groups" como JArray → converte para JObject vazio
+            if (data["Groups"] is JArray)
+            {
+                data["Groups"] = new JObject();
+                SafeWrite(data);
+            }
 
-                dynamic Paths = data["Paths"];
-
-                List<string> groups;
+            // Carrega os atalhos salvos
+            JArray paths = data["Paths"] as JArray ?? new JArray();
+            foreach (string path in paths)
+            {
                 try
                 {
-                    groups = data["Groups"]?.ToObject<List<string>>();
-                }catch
-                {
-                    groups = null;
-                }
-                data["Groups"] = groups != null ? JArray.FromObject(groups) : data["Groups"]; // This part is actually confusing in the original code, but I'll keep it safe.
-                foreach (string path in Paths)
                     if (File.Exists(path))
                         mainWindow.SetConfig(path);
-                r.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    // Item inválido — apenas ignora e continua
+                    Console.WriteLine($"[ConfigManager] Falha ao carregar item '{path}': {ex.Message}");
+                }
             }
         }
+
         public static string[] GetPaths()
         {
+            EnsureValidConfig();
+            JObject data  = SafeRead();
+            JArray Paths  = data["Paths"] as JArray ?? new JArray();
             List<string> result = new List<string>();
-			string json = File.ReadAllText(FileName);
-			JObject data = JObject.Parse(json);
-			dynamic Paths = data["Paths"];
-			foreach (string path in Paths)
-				if (File.Exists(path))
-					result.Add(path);
+            foreach (string p in Paths)
+                if (File.Exists(p))
+                    result.Add(p);
             return result.ToArray();
-		}
-		public static void ChangeStartWithWindows()
-		{
-			string json = File.ReadAllText(FileName);
-			JObject jsonobj = JObject.Parse(json);
-			var currBool = (bool)jsonobj["startWithWindows"];
+        }
 
-			currBool = !(bool)JObject.Parse(File.ReadAllText(FileName))["startWithWindows"];
-			jsonobj["startWithWindows"] = currBool;
-			string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-			File.WriteAllText(FileName, output);
-		}
-		public static bool GetBool() => (bool)JObject.Parse(File.ReadAllText(FileName))["startWithWindows"];
-		public static void VerifyPaths(bool warn)
+        public static void ChangeStartWithWindows()
         {
-            string json = File.ReadAllText(FileName);
-            JObject jsonobj = JObject.Parse(json);
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+            jsonobj["startWithWindows"] = !(bool)jsonobj["startWithWindows"];
+            SafeWrite(jsonobj);
+        }
+
+        public static bool GetBool()
+        {
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+            return jsonobj["startWithWindows"]?.Value<bool>() ?? false;
+        }
+
+        public static void VerifyPaths(bool warn)
+        {
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
             JArray PathsSTR = new JArray();
-			foreach (string path in jsonobj["Paths"])
+
+            foreach (string path in jsonobj["Paths"])
             {
                 if (File.Exists(path))
+                {
                     PathsSTR.Add(path);
-				else
-				{
-                    bool finded = false;
-					var subDirectories = Directory.GetDirectories(Path.GetDirectoryName(path)).ToList();
-					foreach(var i in subDirectories)
-					{
-						var filename = Path.GetFileName(path);
-                        Console.WriteLine($"Checking {filename} in {i} ({i}\\{filename}) ({File.Exists($@"{i}\{filename}")})");
-
-						if (File.Exists($@"{i}\{filename}"))
+                }
+                else
+                {
+                    bool found = false;
+                    try
+                    {
+                        string dir = Path.GetDirectoryName(path);
+                        if (dir != null && Directory.Exists(dir))
                         {
-							MessageBox.Show($"{filename} foi movido para a pasta {i}\\{filename}", "Arquivo Movido");
-                            PathsSTR.Add($@"{i}\{filename}");
-                            finded = true;
-                            break;
+                            var subs = Directory.GetDirectories(dir);
+                            foreach (var sub in subs)
+                            {
+                                string filename = Path.GetFileName(path);
+                                string candidate = Path.Combine(sub, filename);
+                                if (File.Exists(candidate))
+                                {
+                                    MessageBox.Show($"'{filename}' foi encontrado em:\n{candidate}", "Arquivo movido", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    PathsSTR.Add(candidate);
+                                    found = true;
+                                    break;
+                                }
+                            }
                         }
-					};
-					if (warn && !finded)
-						System.Windows.MessageBox.Show($"[{Path.GetFileName(path)}] NÃO ENCONTRADO\n-- {path} ", "LOCAL NÃO ENCONTRADO");
-				}
+                    }
+                    catch { /* continua */ }
+
+                    if (warn && !found)
+                        System.Windows.MessageBox.Show(
+                            $"[{Path.GetFileName(path)}] NÃO ENCONTRADO\n-- {path}",
+                            "LOCAL NÃO ENCONTRADO");
+                }
             }
 
-            if(PathsSTR.Count > 0)
+            if (PathsSTR.Count > 0)
             {
                 jsonobj["Paths"] = PathsSTR;
-                string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-                File.WriteAllText(FileName, output);
+                SafeWrite(jsonobj);
             }
         }
+
         public static void Remove(string path)
         {
-            string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
             JArray PathsSTR = new JArray();
-            foreach (string paths in jsonobj.Paths)
-                if (paths != path)
-                    PathsSTR.Add(paths);
-            jsonobj.Paths = PathsSTR;
-            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-            File.WriteAllText(FileName, output);
+
+            foreach (string p in jsonobj["Paths"])
+                if (p != path)
+                    PathsSTR.Add(p);
+
+            jsonobj["Paths"] = PathsSTR;
+            SafeWrite(jsonobj);
         }
+
         public static int RenameLabel(string path, string labelName)
         {
-            string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
-            dynamic labelsname = jsonobj.labelsname[0];
-            dynamic paths = jsonobj.Paths;
+            EnsureValidConfig();
+            JObject jsonobj    = SafeRead();
+            JArray labelsArray = jsonobj["labelsname"] as JArray ?? new JArray(new JObject());
+            JObject jo         = labelsArray[0] as JObject ?? new JObject();
 
-            JArray LabelsSTR = new JArray();
-            JObject jo = new JObject();
-            LabelsSTR.Add(jo);
-
+            JArray newLabels = new JArray { jo };
             int i = 0;
 
-            foreach (string pathssaved in paths)
+            foreach (string savedPath in jsonobj["Paths"])
             {
-                if (labelsname[pathssaved] != null && i == 0)
-                {
-                    jo.Add(pathssaved, jsonobj.labelsname[0][pathssaved]);
-                    i++;
-                }
-                if (i >= 1 && labelsname[pathssaved] != null)
-                    i++;
-            }
-                
-
-            try { jo.Add(path, labelName); }
-            catch
-            {
-                jo.Remove(path);
-                jo.Add(path, labelName);
+                if (jo[savedPath] != null && i == 0) { jo.Add(savedPath, jsonobj["labelsname"][0][savedPath]); i++; }
+                else if (i >= 1 && jo[savedPath] != null) i++;
             }
 
-            jsonobj.labelsname = LabelsSTR;
-            string output = JsonConvert.SerializeObject(jsonobj, Formatting.Indented);
-            File.WriteAllText(FileName, output);
+            try   { jo.Add(path, labelName); }
+            catch { jo.Remove(path); jo.Add(path, labelName); }
+
+            jsonobj["labelsname"] = newLabels;
+            SafeWrite(jsonobj);
             return i;
         }
+
         public static string GetLabelName(string path, string defaultName)
         {
-            string json = File.ReadAllText(FileName);
-            dynamic jsonobj = JsonConvert.DeserializeObject(json);
-            if (jsonobj.labelsname[0][path] != null)
-                return jsonobj.labelsname[0][path];
-            else
+            EnsureValidConfig();
+            JObject jsonobj = SafeRead();
+            try
+            {
+                var label = jsonobj["labelsname"]?[0]?[path];
+                return label != null ? (string)label : defaultName;
+            }
+            catch
+            {
                 return defaultName;
+            }
         }
     }
 }

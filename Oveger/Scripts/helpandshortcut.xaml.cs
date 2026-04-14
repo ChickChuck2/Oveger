@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Windows;
@@ -21,6 +21,7 @@ namespace Oveger.XAMLS
         {
             Close();
         }
+        private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
         private void Window_Initialized(object sender, EventArgs e)
         {
             MyCommand.InputGestures.Add(new KeyGesture(Key.Escape));

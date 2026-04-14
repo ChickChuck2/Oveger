@@ -1,99 +1,179 @@
-﻿<Window x:Name="Window1" x:Class="Oveger.MainWindow"
+<Window x:Name="Window1" x:Class="Oveger.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Oveger"
         mc:Ignorable="d"
-        Title="Overger"
+        Title="Oveger"
+        FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
         Foreground="White"
-        FontFamily="Microsoft YaHei UI Light"
         Width="{x:Static SystemParameters.PrimaryScreenWidth}"
         Height="{x:Static SystemParameters.PrimaryScreenHeight}"
         WindowStyle="None"
         ShowInTaskbar="False"
         Topmost="True"
         AllowsTransparency="True"
+        Background="Transparent"
         Loaded="Window1_Loaded"
         Initialized="Window1_initialized"
         Closed="Window1_Closed"
-        LocationChanged="Window1_LocationChanged" SizeToContent="WidthAndHeight" ResizeMode="NoResize"
-        
-        >
-    <Window.Background>
-        <SolidColorBrush Opacity="0.45" Color="#FF1F1F1F"/>
-    </Window.Background>
+        LocationChanged="Window1_LocationChanged"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize">
+
     <Window.CommandBindings>
-        <CommandBinding Command="{x:Static local:MainWindow.MyCommand}" 
-                     Executed="MyCommandExecuted"/>
+        <CommandBinding Command="{x:Static local:MainWindow.MyCommand}"
+                        Executed="MyCommandExecuted"/>
     </Window.CommandBindings>
+
     <Window.Resources>
-
-        <Style TargetType="Button" x:Key="TabButtonCircle">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border CornerRadius="30,30,30,30"/>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
+        <!-- Add button ("+") with violet dashed border -->
         <Style TargetType="Button" x:Key="AddButton">
-            <Setter Property="Content" Value="+"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Width" Value="70"/>
-            <Setter Property="Height" Value="70"/>
-            <Setter Property="Foreground" Value="white"/>
-            <Setter Property="FontSize" Value="30"/>
+            <Setter Property="Cursor"    Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border CornerRadius="10,10,10,10"
-                                BorderBrush="#696969"
-                                Background="Black"
-                                BorderThickness="1,1,1,1">
-                            <ContentPresenter x:Name="contentPresenter"
-                                              Margin="-1,-1,-1,-1"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
+                        <Border x:Name="Root"
+                                Width="90" Height="90"
+                                CornerRadius="16"
+                                BorderThickness="2"
+                                SnapsToDevicePixels="True">
+                            <Border.Background>
+                                <SolidColorBrush Color="#1A1730" Opacity="0.60"/>
+                            </Border.Background>
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="#7C3AED" Opacity="0.65"/>
+                            </Border.BorderBrush>
+                            <Grid>
+                                <TextBlock Text="+"
+                                           FontSize="34"
+                                           FontWeight="Light"
+                                           Foreground="#A78BFA"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,0,2"/>
+                            </Grid>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="#A78BFA"/>
+                                <Setter TargetName="Root" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#7C3AED" BlurRadius="20" ShadowDepth="0" Opacity="0.7"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter
-                        Property="Foreground"
-                        Value="LawnGreen"/>
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="Button">
-                                <Border CornerRadius="10,10,10,10"
-                                        Background="#adadad"
-                                        BorderBrush="LawnGreen"
-                                        BorderThickness="1,1,1,1">
-                                    <ContentPresenter
-                                        x:Name="contentPresenter"
-                                        Margin="-1,-1,-1,-1"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-            </Style.Triggers>
         </Style>
     </Window.Resources>
-    <WrapPanel
-        Width="{x:Static SystemParameters.PrimaryScreenWidth}"
-        Height="{x:Static SystemParameters.PrimaryScreenHeight}"
-        x:Name="wrappanel1"
-        HorizontalAlignment="Left"
-        VerticalAlignment="Top" Orientation="Vertical">
-        <WrapPanel x:Name="ungroupedPanel" HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal">
-        </WrapPanel>
-    </WrapPanel>
+
+    <!-- ─── ROOT GLASS PANEL ──────────────────────────────────────── -->
+    <Grid Width="{x:Static SystemParameters.PrimaryScreenWidth}"
+          Height="{x:Static SystemParameters.PrimaryScreenHeight}">
+
+        <!-- Dark glass overlay covering full screen -->
+        <Border x:Name="OverlayBg">
+            <Border.Background>
+                <SolidColorBrush Color="#07061A" Opacity="0.62"/>
+            </Border.Background>
+        </Border>
+
+        <!-- Main content container — docked to bottom, draggable area on top -->
+        <DockPanel LastChildFill="True">
+
+            <!-- ─── HEADER BAR ─────────────────────────────────────── -->
+            <Border DockPanel.Dock="Top"
+                    Margin="24,20,24,0"
+                    CornerRadius="18"
+                    Padding="20,12,20,12"
+                    SnapsToDevicePixels="True">
+                <Border.Background>
+                    <SolidColorBrush Color="#0F0D1F" Opacity="0.82"/>
+                </Border.Background>
+                <Border.BorderBrush>
+                    <SolidColorBrush Color="#FFFFFF" Opacity="0.08"/>
+                </Border.BorderBrush>
+                <Border.BorderThickness>1</Border.BorderThickness>
+                <Border.Effect>
+                    <DropShadowEffect Color="#7C3AED" BlurRadius="28" ShadowDepth="0" Opacity="0.20"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Logo -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="32" Height="32" CornerRadius="8" Margin="0,0,10,0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#7C3AED" Offset="0"/>
+                                    <GradientStop Color="#4F46E5" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="O" FontSize="16" FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="OVEGER"
+                                   FontSize="16" FontWeight="Bold"
+                                   Foreground="White"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Groups tab bar -->
+                    <ScrollViewer Grid.Column="1"
+                                  HorizontalScrollBarVisibility="Hidden"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  Margin="20,0">
+                        <WrapPanel x:Name="groupTabsPanel"
+                                   Orientation="Horizontal"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"/>
+                    </ScrollViewer>
+
+                    <!-- Hint ESC -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border CornerRadius="6" BorderThickness="1" Padding="7,3" Margin="0,0,8,0">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="#FFFFFF" Opacity="0.15"/>
+                            </Border.BorderBrush>
+                            <Border.Background>
+                                <SolidColorBrush Color="#FFFFFF" Opacity="0.05"/>
+                            </Border.Background>
+                            <TextBlock Text="ESC" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                        </Border>
+                        <TextBlock Text="para fechar" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ─── ITEMS AREA ─────────────────────────────────────── -->
+            <ScrollViewer DockPanel.Dock="Top"
+                          Margin="24,12,24,24"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Style="{StaticResource SlimScrollViewer}">
+                <StackPanel x:Name="wrappanel1" Orientation="Vertical">
+                    <!-- Ungrouped items row -->
+                    <WrapPanel x:Name="ungroupedPanel"
+                               Orientation="Horizontal"
+                               Margin="0,4,0,4"/>
+                    <!-- Groups will be dynamically inserted here as Expanders -->
+                </StackPanel>
+            </ScrollViewer>
+
+        </DockPanel>
+    </Grid>
 </Window>

@@ -110,13 +110,32 @@ namespace Oveger
                 throw new Exception("Could not create hWnd source from window.");
             source.AddHook(WndProc);
 
+            // Increase priority for faster startup and responsiveness
+            try { Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High; } catch { }
+
             CreateAddButton();
             ConfigManager.LoadOrCreate(this);
             RegisterHotKey(new WindowInteropHelper(this).Handle, 2, (int)ConfigManager.GetMODKey(0) | (int)ConfigManager.GetMODKey(1), (int)ConfigManager.GetKey());
             TaskbarInitialize();
-            Window1.WindowState = WindowState.Maximized;
-            Hide();
-            Window1.WindowState = WindowState.Normal;
+
+            // Check if started with Windows (minimized)
+            string[] args = Environment.GetCommandLineArgs();
+            bool startMinimized = false;
+            foreach (string arg in args)
+                if (arg.Equals("--minimized", StringComparison.OrdinalIgnoreCase))
+                    startMinimized = true;
+
+            if (startMinimized)
+            {
+                Window1.WindowState = WindowState.Normal;
+                Hide();
+            }
+            else
+            {
+                Window1.WindowState = WindowState.Maximized;
+                Hide();
+                Window1.WindowState = WindowState.Normal;
+            }
         }
 
         // ────────────────────────────────────────────────────────
@@ -182,12 +201,11 @@ namespace Oveger
             context.Items.Add(groupsTray);
             context.Items.Add(close);
 
-            IntPtr icon = Properties.Resources.icon.GetHicon();
             notifyIcon = new System.Windows.Forms.NotifyIcon
             {
                 Text = "Oveger",
                 ContextMenuStrip = context,
-                Icon = System.Drawing.Icon.FromHandle(icon),
+                Icon = Properties.Resources.icon,
                 Visible = true
             };
             notifyIcon.MouseClick += (s, e) =>
@@ -220,6 +238,20 @@ namespace Oveger
         // ────────────────────────────────────────────────────────
         public void SetConfig(string path)
         {
+            var groups = ConfigManager.GetGroupsByPath(path);
+            if (groups.Count > 0)
+            {
+                foreach (var group in groups)
+                    CreateAndAddCard(path, group);
+            }
+            else
+            {
+                CreateAndAddCard(path, null);
+            }
+        }
+
+        private void CreateAndAddCard(string path, string groupName)
+        {
             string fileName = Path.GetFileName(path);
             string labelText = ConfigManager.GetLabelName(path, fileName);
 
@@ -230,7 +262,8 @@ namespace Oveger
                 Orientation = Orientation.Vertical,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(4, 6, 4, 6),
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                Tag = groupName // Store group name here
             };
 
             // Glass card border
@@ -367,7 +400,28 @@ namespace Oveger
             cardStack.Children.Add(cardBorder);
             cardStack.Children.Add(lbl);
 
-            ConfigGroups(path, cardStack);
+            if (!string.IsNullOrEmpty(groupName))
+            {
+                StackPanel customStack = (StackPanel)this.FindName(groupName + "stack");
+                if (customStack == null)
+                {
+                    customStack = new StackPanel { Orientation = Orientation.Vertical };
+                    WrapPanel groupItems = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 4, 8, 8) };
+                    customStack.Children.Add(groupItems);
+                    this.RegisterName(groupName + "stack", customStack);
+                }
+
+                // Put the card in the first WrapPanel child of the stack
+                WrapPanel wp = customStack.Children[0] as WrapPanel;
+                wp?.Children.Add(cardStack);
+
+                var ex = GetOrCreateExpander(groupName);
+                ex.Content = customStack;
+            }
+            else
+            {
+                ungroupedPanel.Children.Add(cardStack);
+            }
         }
 
         // Helper: retrieves the TextBlock label from a cardStack
@@ -379,29 +433,7 @@ namespace Oveger
             return null;
         }
 
-        void ConfigGroups(string path, StackPanel card)
-        {
-            if (ConfigManager.GetGroupByPath(path) != string.Empty)
-            {
-                StackPanel customStack = (StackPanel)this.FindName(ConfigManager.GetGroupByPath(path) + "stack");
-                if (customStack == null)
-                {
-                    customStack = new StackPanel { Orientation = Orientation.Vertical };
-                    WrapPanel groupItems = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 4, 8, 8) };
-                    customStack.Children.Add(groupItems);
-                    this.RegisterName(ConfigManager.GetGroupByPath(path) + "stack", customStack);
-                }
-
-                // Put the card in the first WrapPanel child of the stack
-                WrapPanel wp = customStack.Children[0] as WrapPanel;
-                wp?.Children.Add(card);
-
-                var ex = GetOrCreateExpander(ConfigManager.GetGroupByPath(path));
-                ex.Content = customStack;
-            }
-            else
-                ungroupedPanel.Children.Add(card);
-        }
+        // ConfigGroups logic moved into CreateAndAddCard to support multi-instance
 
         public void Reload()
         {
@@ -436,16 +468,17 @@ namespace Oveger
             right.openfolderpath.Click  += (s, e) => { OpenFilePath(path); right.Close(); };
             right.property.Click        += (s, e) => { OpenProperty(path); right.Close(); };
 
-            if (!ConfigManager.GetGroupByPath(path).Equals(string.Empty))
+            string currentGroup = cardToDelete.Tag as string;
+            if (!string.IsNullOrEmpty(currentGroup))
                 right.addgroup.Content = "Remover do Grupo";
             else
                 right.addgroup.Content = "Adicionar a Grupo";
 
             right.addgroup.Click += (s, e) =>
             {
-                if (!ConfigManager.GetGroupByPath(path).Equals(string.Empty))
+                if (!string.IsNullOrEmpty(currentGroup))
                 {
-                    ConfigManager.RemovePathOnGroup(path, ConfigManager.GetGroupByPath(path));
+                    ConfigManager.RemovePathOnGroup(path, currentGroup);
                     Reload();
                     right.Close();
                 }

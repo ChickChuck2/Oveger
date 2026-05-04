@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -15,7 +15,7 @@ namespace Oveger.XAMLS
                 ("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 
             if (CheckStartup)
-                rk.SetValue(AppName, Assembly.GetExecutingAssembly().Location);
+                rk.SetValue(AppName, "\"" + Assembly.GetExecutingAssembly().Location + "\" --minimized");
             else
                 rk.DeleteValue(AppName, false);
         }

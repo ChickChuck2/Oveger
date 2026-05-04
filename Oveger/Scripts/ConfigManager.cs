@@ -335,11 +335,11 @@ namespace Oveger.XAMLS
             JObject jsonobj = SafeRead();
             JObject jgroups = (JObject)jsonobj["Groups"];
 
-            foreach (var v in jgroups)
+            if (jgroups[group] != null)
             {
-                if (v.Key.Equals(group))
+                var target = (JArray)jgroups[group];
+                if (!target.Any(t => t.ToString().Equals(path)))
                 {
-                    var target = (JArray)jgroups[group];
                     target.Add(path);
                     jsonobj["Groups"][group] = target;
                 }
@@ -389,22 +389,29 @@ namespace Oveger.XAMLS
             return result;
         }
 
-        public static string GetGroupByPath(string path)
+        public static List<string> GetGroupsByPath(string path)
         {
             EnsureValidConfig();
-            JObject jsonobj = SafeRead();
-            JObject groups  = (JObject)jsonobj["Groups"];
-            string result   = string.Empty;
+            JObject jsonobj     = SafeRead();
+            JObject groups      = (JObject)jsonobj["Groups"];
+            List<string> result = new List<string>();
+
+            if (groups == null) return result;
 
             foreach (var item in groups)
-                foreach (JValue v in item.Value)
-                    if (v.ToString().Equals(path))
+            {
+                if (item.Value is JArray groupPaths)
+                {
+                    foreach (JToken v in groupPaths)
                     {
-                        result = item.Key;
-                        break;
+                        if (v.ToString().Equals(path))
+                        {
+                            result.Add(item.Key);
+                            break;
+                        }
                     }
-                    else
-                        result = string.Empty;
+                }
+            }
 
             return result;
         }

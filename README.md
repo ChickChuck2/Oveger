@@ -43,11 +43,18 @@ O projeto segue princípios de modularidade para garantir estabilidade e perform
 
 ---
 
-## 📂 Estrutura do Projeto
+## 📂 Estrutura do Projeto & Documentação
 
+O projeto segue padrões de organização para facilitar a manutenção e escalabilidade:
+
+- **[Documentação Arquitetural](file:///b:/Repos/Oveger/docs/architecture/architecture.md)**: Detalhes sobre componentes e fluxo de dados.
+- **[Decisões de Design (ADR)](file:///b:/Repos/Oveger/docs/decisions/adr-001-multi-group-support.md)**: Histórico de escolhas técnicas.
+- **[Histórico de Mudanças](file:///b:/Repos/Oveger/CHANGELOG.md)**: Registro de versões e correções.
+
+### Diretórios
 - `MainWindow.xaml.cs`: Lógica principal de UI e orquestração de eventos.
 - `Scripts/`: Módulos especializados em configuração, gestão de ícones e lógica de janelas.
-- `Resources/`: Assets visuais e componentes de estilo.
+- `docs/`: Documentação técnica detalhada, ADRs e histórico de tarefas.
 
 ---
 

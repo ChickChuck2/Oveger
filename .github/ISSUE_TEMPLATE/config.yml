@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "💬 Discussões e Dúvidas Comunitárias"
+    url: "https://github.com/ChickChuck2/Oveger/discussions"
+    about: "Faça perguntas, compartilhe setups ou converse com outros usuários."
+  - name: "📖 Documentação de Arquitetura"
+    url: "https://github.com/ChickChuck2/Oveger/tree/master/docs"
+    about: "Consulte a documentação técnica e decisões de arquitetura (ADRs)."

@@ -1,0 +1,59 @@
+{
+  "name": "oveger",
+  "version": "1.1.0",
+  "description": "🚀 Launcher & organizador de arquivos rápido e elegante para Windows em C#/WPF com overlay translúcido, hotkeys e suporte multi-monitor.",
+  "author": {
+    "name": "Carlos Silva",
+    "url": "https://github.com/ChickChuck2"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/ChickChuck2/Oveger#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChickChuck2/Oveger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ChickChuck2/Oveger/issues"
+  },
+  "urls": {
+    "homepage": "https://github.com/ChickChuck2/Oveger#readme",
+    "issues": "https://github.com/ChickChuck2/Oveger/issues",
+    "discussions": "https://github.com/ChickChuck2/Oveger/discussions",
+    "repository": "https://github.com/ChickChuck2/Oveger"
+  },
+  "keywords": [
+    "csharp",
+    "dotnet",
+    "wpf",
+    "windows",
+    "windows-11",
+    "windows-10",
+    "launcher",
+    "app-launcher",
+    "productivity",
+    "overlay",
+    "file-organizer",
+    "desktop-app",
+    "shortcut",
+    "shortcuts",
+    "hotkey",
+    "glassmorphism",
+    "fluent-design",
+    "customizable",
+    "win32-api",
+    "open-source"
+  ],
+  "classifiers": [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: Portuguese (Brazilian)",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Programming Language :: C#",
+    "Topic :: Desktop Environment",
+    "Topic :: Utilities"
+  ]
+}

@@ -1,0 +1,39 @@
+name: "💡 Sugestão de Funcionalidade / Feature Request"
+description: "Sugira uma nova ideia, integração ou melhoria para o Oveger"
+title: "[Feature]: "
+labels: ["enhancement", "needs-discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por ajudar a tornar o Oveger ainda melhor! Compartilhe sua visão abaixo.
+  - type: textarea
+    id: problem-context
+    attributes:
+      label: "Problema ou Necessidade"
+      description: "Sua ideia está relacionada a um problema ou limitação existente? Descreva a situação."
+      placeholder: "Fico frustrado quando preciso..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: "Solução Proposta"
+      description: "Como você imagina que essa funcionalidade deve funcionar no Oveger?"
+      placeholder: "Adicionar uma opção para..."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives-considered
+    attributes:
+      label: "Alternativas Consideradas"
+      description: "Você considerou ou testou alguma solução alternativa?"
+    validations:
+      required: false
+  - type: textarea
+    id: visual-mockup
+    attributes:
+      label: "Mockups ou Referências Visuais"
+      description: "Imagens conceituais, rascunhos de UI ou exemplos de outros aplicativos."
+    validations:
+      required: false

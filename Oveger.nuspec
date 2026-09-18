@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Oveger</id>
+    <version>1.1.0</version>
+    <title>Oveger</title>
+    <authors>Carlos Silva (ChickChuck2)</authors>
+    <owners>ChickChuck2</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <projectUrl>https://github.com/ChickChuck2/Oveger</projectUrl>
+    <repository type="git" url="https://github.com/ChickChuck2/Oveger.git" branch="master" />
+    <description>🚀 Launcher &amp; organizador de arquivos rápido e elegante para Windows em C#/WPF com overlay translúcido, hotkeys e suporte multi-monitor.</description>
+    <summary>Modern productivity launcher and file organizer overlay for Windows built with C# and WPF.</summary>
+    <releaseNotes>https://github.com/ChickChuck2/Oveger/releases/tag/v1.1.0</releaseNotes>
+    <copyright>Copyright © 2022-2026 Carlos Silva (ChickChuck2)</copyright>
+    <tags>csharp dotnet wpf windows launcher app-launcher productivity overlay file-organizer desktop-app shortcut shortcuts hotkey glassmorphism fluent-design win32-api open-source</tags>
+  </metadata>
+  <files>
+    <file src="Oveger\bin\Release\**\*" target="tools" />
+  </files>
+</package>

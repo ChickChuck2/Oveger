@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <Product>Oveger</Product>
+    <Company>ChickChuck2</Company>
+    <Authors>Carlos Silva (ChickChuck2)</Authors>
+    <Copyright>Copyright © 2022-2026 Carlos Silva (ChickChuck2)</Copyright>
+    <Description>🚀 Launcher &amp; organizador de arquivos rápido e elegante para Windows em C#/WPF com overlay translúcido, hotkeys e suporte multi-monitor.</Description>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <PackageId>Oveger</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ChickChuck2/Oveger</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ChickChuck2/Oveger.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>csharp;dotnet;wpf;windows;launcher;productivity;overlay;file-organizer;hotkey;fluent-design;glassmorphism;open-source</PackageTags>
+  </PropertyGroup>
+</Project>

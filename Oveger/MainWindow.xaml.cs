@@ -46,13 +46,108 @@ namespace Oveger
         readonly System.Windows.Forms.ToolStripMenuItem StartWithWindows = new System.Windows.Forms.ToolStripMenuItem { Text = "Iniciar com Windows" };
         readonly System.Windows.Forms.ToolStripMenuItem changehotkey     = new System.Windows.Forms.ToolStripMenuItem { Text = "Atalhos e ajuda" };
         readonly System.Windows.Forms.ToolStripMenuItem groupsTray       = new System.Windows.Forms.ToolStripMenuItem { Text = "Gerenciar Grupos" };
+        [DllImport("SHCore.dll", SetLastError = true)]
+        private static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
 
-        public MainWindow() => InitializeComponent();
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromPoint(System.Drawing.Point pt, uint dwFlags);
+
+        private const uint MONITOR_DEFAULTTONEAREST = 2;
+
+        public void PositionToCurrentScreen()
+        {
+            try
+            {
+                Point mousePos = VariablesClasses.Mouse.GetMousePosition();
+                var pt = new System.Drawing.Point((int)mousePos.X, (int)mousePos.Y);
+                var screen = System.Windows.Forms.Screen.FromPoint(pt);
+                if (screen == null)
+                    screen = System.Windows.Forms.Screen.PrimaryScreen;
+
+                double scaleX = 1.0;
+                double scaleY = 1.0;
+
+                try
+                {
+                    IntPtr hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+                    uint dpiX = 96, dpiY = 96;
+                    if (hMonitor != IntPtr.Zero && GetDpiForMonitor(hMonitor, 0, out dpiX, out dpiY) == 0 && dpiX > 0 && dpiY > 0)
+                    {
+                        scaleX = dpiX / 96.0;
+                        scaleY = dpiY / 96.0;
+                    }
+                    else
+                    {
+                        DpiScale dpi = VisualTreeHelper.GetDpi(this);
+                        scaleX = dpi.DpiScaleX;
+                        scaleY = dpi.DpiScaleY;
+                    }
+                }
+                catch
+                {
+                    DpiScale dpi = VisualTreeHelper.GetDpi(this);
+                    scaleX = dpi.DpiScaleX;
+                    scaleY = dpi.DpiScaleY;
+                }
+
+                if (scaleX <= 0) scaleX = 1.0;
+                if (scaleY <= 0) scaleY = 1.0;
+
+                this.WindowState = WindowState.Normal;
+                this.Left = screen.Bounds.Left / scaleX;
+                this.Top = screen.Bounds.Top / scaleY;
+                this.Width = screen.Bounds.Width / scaleX;
+                this.Height = screen.Bounds.Height / scaleY;
+            }
+            catch
+            {
+                this.WindowState = WindowState.Normal;
+                this.Left = 0;
+                this.Top = 0;
+                this.Width = SystemParameters.PrimaryScreenWidth;
+                this.Height = SystemParameters.PrimaryScreenHeight;
+            }
+        }
+
+        public void ShowOverlay()
+        {
+            PositionToCurrentScreen();
+            this.WindowState = WindowState.Normal;
+            base.Show();
+            this.Activate();
+            this.Focus();
+            inprogram = true;
+        }
+
+        public void HideOverlay()
+        {
+            base.Hide();
+            inprogram = false;
+        }
+
+        public new void Show() => ShowOverlay();
+        public new void Hide() => HideOverlay();
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            this.IsVisibleChanged += (s, e) =>
+            {
+                if (this.IsVisible)
+                {
+                    PositionToCurrentScreen();
+                    inprogram = true;
+                }
+                else
+                {
+                    inprogram = false;
+                }
+            };
+        }
 
         private void MyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            Hide();
-            inprogram = false;
+            HideOverlay();
         }
 
         private void Window1_Closed(object sender, EventArgs e) => notifyIcon.Visible = false;
@@ -127,14 +222,11 @@ namespace Oveger
 
             if (startMinimized)
             {
-                Window1.WindowState = WindowState.Normal;
-                Hide();
+                HideOverlay();
             }
             else
             {
-                Window1.WindowState = WindowState.Maximized;
-                Hide();
-                Window1.WindowState = WindowState.Normal;
+                ShowOverlay();
             }
         }
 
@@ -639,9 +731,8 @@ namespace Oveger
         {
             if (msg == 0x0312)
             {
-                if (inprogram) Hide();
-                else           Show();
-                inprogram = !inprogram;
+                if (inprogram) HideOverlay();
+                else           ShowOverlay();
             }
             return IntPtr.Zero;
         }

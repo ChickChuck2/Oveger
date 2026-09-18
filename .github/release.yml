@@ -1,0 +1,24 @@
+changelog:
+  categories:
+    - title: "🚀 Novas Funcionalidades (Features)"
+      labels:
+        - "enhancement"
+        - "feature"
+    - title: "⚡ Performance & Otimizações"
+      labels:
+        - "performance"
+        - "optimization"
+    - title: "🐛 Correções de Bugs (Bug Fixes)"
+      labels:
+        - "bug"
+        - "fix"
+    - title: "📝 Documentação"
+      labels:
+        - "documentation"
+        - "docs"
+    - title: "🔧 Manutenção & CI/CD"
+      labels:
+        - "maintenance"
+        - "ci"
+        - "dependencies"
+        - "workflow"

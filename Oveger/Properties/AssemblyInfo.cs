@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -8,12 +8,12 @@ using System.Windows;
 // conjunto de atributos. Altere estes valores de atributo para modificar as informações
 // associada a um assembly.
 [assembly: AssemblyTitle("Oveger")]
-[assembly: AssemblyDescription("Overlay para facilitar o gerenciamento de arquivos")]
+[assembly: AssemblyDescription("Launcher & organizador de arquivos rápido e elegante para Windows em C#/WPF")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("CywoodsDev")]
+[assembly: AssemblyCompany("Carlos Silva (ChickChuck2)")]
 [assembly: AssemblyProduct("Oveger")]
-[assembly: AssemblyCopyright("Copyright ©  2022")]
-[assembly: AssemblyTrademark("AMOGUS")]
+[assembly: AssemblyCopyright("Copyright © 2022-2026 Carlos Silva (ChickChuck2)")]
+[assembly: AssemblyTrademark("Oveger")]
 [assembly: AssemblyCulture("")]
 
 // Definir ComVisible como false torna os tipos neste assembly invisíveis
@@ -51,5 +51,5 @@ using System.Windows;
 // É possível especificar todos os valores ou usar como padrão os Números de Build e da Revisão
 // usando o "*" como mostrado abaixo:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]

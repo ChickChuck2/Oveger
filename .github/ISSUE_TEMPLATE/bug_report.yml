@@ -1,0 +1,75 @@
+name: "🐛 Relatório de Bug / Bug Report"
+description: "Informe um problema ou comportamento inesperado no Oveger"
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por dedicar seu tempo para relatar este problema! Preencha as informações abaixo para que possamos reproduzir e corrigir o bug rapidamente.
+  - type: input
+    id: version
+    attributes:
+      label: "Versão do Oveger"
+      description: "Qual versão ou tag do Oveger você está utilizando? (ex: v1.1.0, master)"
+      placeholder: "v1.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os-version
+    attributes:
+      label: "Sistema Operacional Windows"
+      description: "Qual versão do Windows você está executando?"
+      options:
+        - "Windows 11 (23H2 ou superior)"
+        - "Windows 11 (22H2 / 21H2)"
+        - "Windows 10 (22H2)"
+        - "Windows 10 (versão anterior)"
+        - "Windows Server"
+    validations:
+      required: true
+  - type: dropdown
+    id: monitor-setup
+    attributes:
+      label: "Configuração de Monitores"
+      description: "Quantos monitores e escala DPI estão em uso?"
+      options:
+        - "Monitor único (100% DPI)"
+        - "Monitor único (Alta resolução / >100% DPI)"
+        - "Múltiplos monitores (mesmo DPI / resolução)"
+        - "Múltiplos monitores (DPI / resolução mista)"
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descrição do Problema"
+      description: "Explique claramente o que aconteceu de forma concisa."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: "Passos para Reproduzir"
+      description: "Como reproduzir este comportamento passo a passo?"
+      placeholder: |
+        1. Inicie o Oveger
+        2. Pressione o atalho Ctrl + Alt + S
+        3. Tente adicionar um arquivo do tipo...
+        4. Observe o erro
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: "Comportamento Esperado"
+      description: "O que você esperava que acontecesse em vez disso?"
+    validations:
+      required: true
+  - type: textarea
+    id: logs-screenshots
+    attributes:
+      label: "Logs, Mensagens de Erro ou Screenshots"
+      description: "Cole logs do Windows Event Viewer, stack traces ou arraste imagens/vídeos aqui."
+    validations:
+      required: false

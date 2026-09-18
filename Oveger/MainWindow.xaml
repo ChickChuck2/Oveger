@@ -8,8 +8,12 @@
         Title="Oveger"
         FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
         Foreground="White"
+        WindowStartupLocation="Manual"
+        Left="0"
+        Top="0"
         Width="{x:Static SystemParameters.PrimaryScreenWidth}"
         Height="{x:Static SystemParameters.PrimaryScreenHeight}"
+        WindowState="Normal"
         WindowStyle="None"
         ShowInTaskbar="False"
         Topmost="True"
@@ -19,7 +23,6 @@
         Initialized="Window1_initialized"
         Closed="Window1_Closed"
         LocationChanged="Window1_LocationChanged"
-        SizeToContent="WidthAndHeight"
         ResizeMode="NoResize">
 
     <Window.CommandBindings>
@@ -75,8 +78,8 @@
     </Window.Resources>
 
     <!-- ─── ROOT GLASS PANEL ──────────────────────────────────────── -->
-    <Grid Width="{x:Static SystemParameters.PrimaryScreenWidth}"
-          Height="{x:Static SystemParameters.PrimaryScreenHeight}">
+    <Grid HorizontalAlignment="Stretch"
+          VerticalAlignment="Stretch">
 
         <!-- Dark glass overlay covering full screen -->
         <Border x:Name="OverlayBg">

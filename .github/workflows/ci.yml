@@ -1,0 +1,66 @@
+name: CI & Build Pipeline
+
+on:
+  push:
+    branches: [ "master", "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test (${{ matrix.os }} - ${{ matrix.configuration }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, windows-2022]
+        configuration: [Debug, Release]
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: 📦 Setup NuGet CLI
+        uses: nuget/setup-nuget@v2
+
+      - name: 🔄 Restore NuGet Packages
+        run: nuget restore Oveger.sln
+
+      - name: 🔨 Build Solution (${{ matrix.configuration }})
+        run: msbuild Oveger.sln /p:Configuration=${{ matrix.configuration }} /p:Platform="Any CPU" /m /verbosity:minimal
+
+      - name: 🧪 Automated Verification & Smoke Check
+        shell: pwsh
+        run: |
+          $exePath = "Oveger\bin\${{ matrix.configuration }}\Oveger.exe"
+          if (Test-Path $exePath) {
+              Write-Host "✅ Binary compiled successfully: $exePath"
+              $fileInfo = Get-Item $exePath
+              Write-Host "   Size: $($fileInfo.Length) bytes"
+              Write-Host "   Version: $($fileInfo.VersionInfo.FileVersion)"
+              Write-Host "   Product: $($fileInfo.VersionInfo.ProductName)"
+          } else {
+              Write-Error "❌ Binary $exePath was not found after compilation!"
+              exit 1
+          }
+
+      - name: 📦 Upload Build Artifacts
+        if: matrix.configuration == 'Release' && matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Oveger-Release-Windows
+          path: |
+            Oveger/bin/Release/Oveger.exe
+            Oveger/bin/Release/*.dll
+            Oveger/bin/Release/*.config
+          retention-days: 14
